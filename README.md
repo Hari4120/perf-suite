@@ -2,8 +2,8 @@
 
 A professional-grade API performance benchmarking and analysis tool built with Next.js 15, TypeScript, and Chart.js.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/perf-bench-suite)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/yourusername/perf-bench-suite)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Hari4120/perf-suite)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Hari4120/perf-suite)
 
 ## ✨ Features
 
@@ -32,8 +32,8 @@ A professional-grade API performance benchmarking and analysis tool built with N
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/perf-bench-suite.git
-cd perf-bench-suite
+git clone https://github.com/Hari4120/perf-suite.git
+cd perf-suite
 ```
 
 ### 2. Install Dependencies
@@ -250,7 +250,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
 
-**[🚀 Deploy Now](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/perf-bench-suite)** | **[📖 Documentation](https://github.com/yourusername/perf-bench-suite/wiki)** | **[🐛 Report Bug](https://github.com/yourusername/perf-bench-suite/issues)**
+**[🚀 Deploy Now](https://vercel.com/new/clone?repository-url=https://github.com/Hari4120/perf-suite)** | **[📖 Documentation](https://github.com/Hari4120/perf-suite/wiki)** | **[🐛 Report Bug](https://github.com/Hari4120/perf-suite/issues)**
 
 Made with ❤️ for developers who care about performance
 
