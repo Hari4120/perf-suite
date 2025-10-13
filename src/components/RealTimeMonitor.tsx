@@ -17,6 +17,13 @@ import { AnimatedButton } from "@/components/ui/AnimatedButton"
 import { AnimatedCard, AnimatedCardHeader, AnimatedCardTitle, AnimatedCardDescription, AnimatedCardContent } from "@/components/ui/AnimatedCard"
 import { cn } from "@/lib/utils"
 
+// Reliable endpoints for real-time monitoring
+const MONITOR_ENDPOINTS = [
+  'https://httpbin.org/get',
+  'https://api.github.com/zen', 
+  'https://httpbin.org/uuid'
+]
+
 interface NetworkMetrics {
   timestamp: number
   latency: number
@@ -57,25 +64,31 @@ export default function RealTimeMonitor() {
     const timestamp = Date.now()
     
     try {
-      // Test multiple endpoints for reliability
-      const testEndpoints = [
-        'https://httpbin.org/get',
-        'https://www.google.com/favicon.ico',
-        'https://www.cloudflare.com/favicon.ico'
-      ]
+      // Test endpoints sequentially to get reliable measurements
+      let bestLatency = 9999
+      let successCount = 0
       
-      const startTime = performance.now()
-      const promises = testEndpoints.map(endpoint => 
-        fetch(endpoint, { 
-          method: 'HEAD', 
-          cache: 'no-cache',
-          signal: AbortSignal.timeout(5000)
-        }).catch(() => null)
-      )
+      for (const endpoint of MONITOR_ENDPOINTS) {
+        try {
+          const startTime = performance.now()
+          const response = await fetch(endpoint, { 
+            method: 'HEAD', 
+            cache: 'no-cache',
+            signal: AbortSignal.timeout(3000)
+          })
+          
+          if (response.ok) {
+            const latency = performance.now() - startTime
+            bestLatency = Math.min(bestLatency, latency)
+            successCount++
+            break // Use first successful measurement
+          }
+        } catch {
+          continue // Try next endpoint
+        }
+      }
       
-      const results = await Promise.allSettled(promises)
-      const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length
-      const latency = performance.now() - startTime
+      const latency = bestLatency === 9999 ? 1000 : bestLatency
       
       // Calculate connection quality
       let quality: 'excellent' | 'good' | 'fair' | 'poor'
@@ -107,8 +120,7 @@ export default function RealTimeMonitor() {
         quality
       }
       
-    } catch (error) {
-      console.error('Network measurement error:', error)
+    } catch {
       return {
         timestamp,
         latency: 999,

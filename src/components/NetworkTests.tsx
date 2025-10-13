@@ -20,6 +20,7 @@ import { AnimatedButton } from "@/components/ui/AnimatedButton"
 import { AnimatedCard, AnimatedCardHeader, AnimatedCardTitle, AnimatedCardDescription, AnimatedCardContent } from "@/components/ui/AnimatedCard"
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"
 import type { BenchmarkResult, NetworkTestData } from "@/types/benchmark"
+import { runSpeedTest, runBufferBloatTest, runDNSTest, runNetworkQualityTest } from "@/lib/networkTests"
 import { cn } from "@/lib/utils"
 
 interface NetworkTestsProps {
@@ -34,18 +35,90 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
     setActiveTest(testType)
     
     try {
-      const response = await fetch('/api/network-test', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: testType })
-      })
+      let networkData: NetworkTestData = {}
+      let testResults: number[] = []
+      let testName = ''
       
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Test failed')
+      switch (testType) {
+        case 'speed-test':
+          const speedResult = await runSpeedTest()
+          networkData = {
+            downloadSpeed: speedResult.downloadSpeed,
+            uploadSpeed: speedResult.uploadSpeed,
+            latency: speedResult.latency,
+            qualityScore: speedResult.qualityScore,
+            connectionType: speedResult.connectionType
+          }
+          testResults = [speedResult.downloadSpeed, speedResult.uploadSpeed]
+          testName = `Speed Test - ${speedResult.testEndpoint}`
+          break
+          
+        case 'buffer-bloat':
+          const bufferResult = await runBufferBloatTest()
+          networkData = {
+            bufferBloat: bufferResult.bufferBloat,
+            latency: bufferResult.baseLatency,
+            qualityScore: bufferResult.bufferBloat <= 10 ? 100 : Math.max(20, 100 - bufferResult.bufferBloat * 2)
+          }
+          testResults = [bufferResult.bufferBloat]
+          testName = 'Buffer Bloat Test'
+          break
+          
+        case 'dns-test':
+          const dnsResult = await runDNSTest()
+          networkData = {
+            dnsResolution: dnsResult.dnsResolution,
+            qualityScore: dnsResult.dnsResolution <= 50 ? 100 : Math.max(40, 100 - dnsResult.dnsResolution)
+          }
+          testResults = [dnsResult.dnsResolution]
+          testName = 'DNS Resolution Test'
+          break
+          
+        case 'network-quality':
+          const qualityResult = await runNetworkQualityTest()
+          networkData = {
+            downloadSpeed: qualityResult.downloadSpeed,
+            uploadSpeed: qualityResult.uploadSpeed,
+            latency: qualityResult.latency,
+            jitter: qualityResult.jitter,
+            bufferBloat: qualityResult.bufferBloat,
+            dnsResolution: qualityResult.dnsResolution,
+            qualityScore: qualityResult.qualityScore,
+            connectionType: qualityResult.connectionType
+          }
+          testResults = [qualityResult.qualityScore]
+          testName = 'Network Quality Assessment'
+          break
+          
+        default:
+          throw new Error('Invalid test type')
       }
       
-      const result: BenchmarkResult = await response.json()
+      // Create BenchmarkResult object
+      const result: BenchmarkResult = {
+        id: `test-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        url: testName,
+        timestamp: Date.now(),
+        benchmarkType: testType as BenchmarkResult['benchmarkType'],
+        results: testResults,
+        stats: {
+          min: Math.min(...testResults),
+          max: Math.max(...testResults),
+          avg: testResults.reduce((a, b) => a + b, 0) / testResults.length,
+          median: testResults.sort()[Math.floor(testResults.length / 2)],
+          p95: testResults.sort()[Math.floor(testResults.length * 0.95)],
+          p99: testResults.sort()[Math.floor(testResults.length * 0.99)],
+          count: testResults.length,
+          failed: 0
+        },
+        metadata: {
+          userAgent: navigator.userAgent,
+          runs: 1,
+          timeout: 10000
+        },
+        networkData
+      }
+      
       setResults(prev => ({ ...prev, [testType]: result }))
       onResult(result)
       
