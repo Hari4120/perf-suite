@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Line } from "react-chartjs-2"
+import { motion, AnimatePresence } from "framer-motion"
 import {
   Chart as ChartJS,
   LineElement,
@@ -13,6 +14,7 @@ import {
   ChartOptions,
 } from "chart.js"
 import { useTheme } from "next-themes"
+import { LiveIndicator } from "@/components/ui/LoadingSpinner"
 
 ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend)
 
@@ -132,18 +134,33 @@ export default function RealTimeChart({
   }
   
   return (
-    <div className="relative h-64 w-full">
-      {isActive && (
-        <div className="absolute top-2 right-2 z-10">
-          <div className="flex items-center space-x-2 bg-green-100 dark:bg-green-900 px-2 py-1 rounded-md">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span className="text-xs text-green-700 dark:text-green-300 font-medium">
-              LIVE
-            </span>
-          </div>
-        </div>
-      )}
-      <Line ref={chartRef} data={chartData} options={options} />
-    </div>
+    <motion.div 
+      className="relative h-64 w-full"
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.5, ease: "easeOut" }}
+    >
+      <AnimatePresence>
+        {(isActive || displayData.length > 0) && (
+          <motion.div 
+            className="absolute top-3 right-3 z-10"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <LiveIndicator isActive={isActive} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      >
+        <Line ref={chartRef} data={chartData} options={options} />
+      </motion.div>
+    </motion.div>
   )
 }
