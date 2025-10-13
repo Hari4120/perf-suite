@@ -9,6 +9,8 @@ import { AnimatedCard, AnimatedCardHeader, AnimatedCardTitle, AnimatedCardDescri
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"
 import FAQ from "@/components/FAQ"
+import NetworkTests from "@/components/NetworkTests"
+import RealTimeMonitor from "@/components/RealTimeMonitor"
 import { LazyLatencyChart, LazyHistogramChart, LazyComparisonChart, LazyRealTimeChart } from "@/components/LazyCharts"
 import { formatDuration, cn } from "@/lib/utils"
 import type { BenchmarkResult, BenchmarkConfig, BenchmarkType, BenchmarkProgress } from "@/types/benchmark"
@@ -47,7 +49,10 @@ export default function Dashboard() {
   }, [results])
   
   const runBenchmark = async () => {
-    if (!url.trim()) {
+    // Network tests don't require URL
+    const networkTests = ['speed-test', 'buffer-bloat', 'dns-test', 'network-quality']
+    
+    if (!networkTests.includes(benchmarkType) && !url.trim()) {
       alert('Please enter a valid URL')
       return
     }
@@ -57,17 +62,24 @@ export default function Dashboard() {
     setRealtimeData([])
     
     try {
-      const config: BenchmarkConfig = {
+      let apiEndpoint = '/api/benchmark'
+      let config: Record<string, unknown> = {
         url: url.trim(),
         type: benchmarkType,
         runs,
         timeout,
-        ...(benchmarkType !== 'latency' && { concurrent, duration })
+        ...(benchmarkType !== 'latency' && !networkTests.includes(benchmarkType) && { concurrent, duration })
+      }
+      
+      // Use network-test API for network tests
+      if (networkTests.includes(benchmarkType)) {
+        apiEndpoint = '/api/network-test'
+        config = { type: benchmarkType }
       }
       
       setProgress({ current: 0, total: runs, phase: 'running' })
       
-      const response = await fetch('/api/benchmark', {
+      const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
@@ -229,6 +241,10 @@ export default function Dashboard() {
                     <option value="throughput">Throughput Test</option>
                     <option value="load">Load Test</option>
                     <option value="stress">Stress Test</option>
+                    <option value="speed-test">Speed Test</option>
+                    <option value="buffer-bloat">Buffer Bloat Test</option>
+                    <option value="dns-test">DNS Test</option>
+                    <option value="network-quality">Network Quality</option>
                   </select>
                 </div>
               </div>
@@ -705,6 +721,15 @@ export default function Dashboard() {
           )}
         </AnimatePresence>
 
+        {/* Network Testing Suite */}
+        <NetworkTests onResult={(result) => {
+          setCurrentResult(result)
+          setResults(prev => [result, ...prev.slice(0, 9)])
+        }} />
+        
+        {/* Real-Time Network Monitor */}
+        <RealTimeMonitor />
+        
         {/* FAQ Section */}
         <FAQ />
       </div>

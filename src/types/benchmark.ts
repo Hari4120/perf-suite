@@ -12,6 +12,21 @@ export interface BenchmarkResult {
     concurrent?: number
     duration?: number
   }
+  networkData?: NetworkTestData
+}
+
+export interface NetworkTestData {
+  downloadSpeed?: number // Mbps
+  uploadSpeed?: number // Mbps
+  latency?: number // ms
+  jitter?: number // ms
+  packetLoss?: number // percentage
+  bufferBloat?: number // ms
+  dnsResolution?: number // ms
+  connectionType?: string
+  isp?: string
+  location?: string
+  qualityScore?: number // 0-100
 }
 
 export interface BenchmarkStats {
@@ -25,7 +40,7 @@ export interface BenchmarkStats {
   failed: number
 }
 
-export type BenchmarkType = 'latency' | 'throughput' | 'stress' | 'load'
+export type BenchmarkType = 'latency' | 'throughput' | 'stress' | 'load' | 'speed-test' | 'buffer-bloat' | 'dns-test' | 'network-quality'
 
 export interface BenchmarkConfig {
   url: string

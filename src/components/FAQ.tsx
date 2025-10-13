@@ -71,6 +71,16 @@ const faqData: FAQItem[] = [
     answer: "Currently supports GET requests. This covers most API testing scenarios including REST endpoints, status checks, and data retrieval endpoints.",
     category: "features"
   },
+  {
+    question: "What's the difference between API tests and network tests?",
+    answer: "API tests measure specific endpoint performance, while network tests assess your internet connection quality, speed, buffer bloat, DNS resolution, and overall connectivity health.",
+    category: "features"
+  },
+  {
+    question: "How does the speed test work?",
+    answer: "The speed test downloads test files from reliable servers to measure your actual download speed, estimates upload speed, and measures latency. Results may vary based on server load and distance.",
+    category: "features"
+  },
 
   // Troubleshooting
   {
@@ -103,6 +113,16 @@ const faqData: FAQItem[] = [
     answer: "Very fast results (<10ms) might indicate cached responses. Very slow results might indicate network issues or server problems. Compare with other tools to verify.",
     category: "troubleshooting"
   },
+  {
+    question: "What is buffer bloat and why should I care?",
+    answer: "Buffer bloat occurs when network buffers are too large, causing increased latency under load. It affects real-time applications like video calls and gaming. Our test measures latency increase under network load.",
+    category: "troubleshooting"
+  },
+  {
+    question: "Why is my real-time monitor showing offline?",
+    answer: "The monitor tests multiple endpoints to determine connectivity. Temporary offline status might indicate network issues, DNS problems, or blocked connections. Check your internet connection and firewall settings.",
+    category: "troubleshooting"
+  },
 
   // Advanced
   {
@@ -133,6 +153,16 @@ const faqData: FAQItem[] = [
   {
     question: "What performance metrics should I focus on?",
     answer: "For user-facing APIs: focus on 95th percentile and median. For internal APIs: average and max. For SLAs: 99th percentile. Always monitor error rates alongside response times.",
+    category: "advanced"
+  },
+  {
+    question: "How can I use network tests for troubleshooting?",
+    answer: "Use speed tests to verify ISP performance, buffer bloat tests for gaming/video call issues, DNS tests for slow website loading, and real-time monitoring to track connection stability over time.",
+    category: "advanced"
+  },
+  {
+    question: "What's a good network quality score?",
+    answer: "90-100: Excellent for all activities. 70-89: Good for most uses. 50-69: Fair, may have issues with real-time apps. Below 50: Poor, significant problems expected. Score considers speed, latency, jitter, and stability.",
     category: "advanced"
   }
 ]
