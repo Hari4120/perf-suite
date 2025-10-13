@@ -8,10 +8,8 @@ import { Input } from "@/components/ui/Input"
 import { AnimatedCard, AnimatedCardHeader, AnimatedCardTitle, AnimatedCardDescription, AnimatedCardContent } from "@/components/ui/AnimatedCard"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import { LoadingSpinner } from "@/components/ui/LoadingSpinner"
-import LatencyChart from "@/components/charts/LatencyChart"
-import HistogramChart from "@/components/charts/HistogramChart"
-import ComparisonChart from "@/components/charts/ComparisonChart"
-import RealTimeChart from "@/components/charts/RealTimeChart"
+import FAQ from "@/components/FAQ"
+import { LazyLatencyChart, LazyHistogramChart, LazyComparisonChart, LazyRealTimeChart } from "@/components/LazyCharts"
 import { formatDuration, cn } from "@/lib/utils"
 import type { BenchmarkResult, BenchmarkConfig, BenchmarkType, BenchmarkProgress } from "@/types/benchmark"
 
@@ -356,7 +354,7 @@ export default function Dashboard() {
                 </AnimatedCardDescription>
               </AnimatedCardHeader>
               <AnimatedCardContent>
-                <RealTimeChart
+                <LazyRealTimeChart
                   data={realtimeData}
                   isActive={isRunning}
                   label="Response Time (ms)"
@@ -437,15 +435,15 @@ export default function Dashboard() {
                   icon: "❌",
                   delay: 0.5
                 }
-              ].map((stat, index) => (
+              ].map((stat) => (
                 <motion.div
                   key={stat.label}
                   initial={{ opacity: 0, y: 20, scale: 0.8 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20, scale: 0.8 }}
                   transition={{ 
-                    duration: 0.5, 
-                    delay: stat.delay,
+                    duration: 0.3, 
+                    delay: stat.delay * 0.05, // Much faster stagger
                     ease: "easeOut"
                   }}
                   whileHover={{ 
@@ -527,7 +525,7 @@ export default function Dashboard() {
                   </AnimatedCardTitle>
                 </AnimatedCardHeader>
                 <AnimatedCardContent>
-                  <LatencyChart data={currentResult.results} />
+                  <LazyLatencyChart data={currentResult.results} />
                 </AnimatedCardContent>
               </AnimatedCard>
               
@@ -541,7 +539,7 @@ export default function Dashboard() {
                   </AnimatedCardTitle>
                 </AnimatedCardHeader>
                 <AnimatedCardContent>
-                  <HistogramChart data={currentResult.results} />
+                  <LazyHistogramChart data={currentResult.results} />
                 </AnimatedCardContent>
               </AnimatedCard>
             </motion.div>
@@ -564,7 +562,7 @@ export default function Dashboard() {
                 </AnimatedCardDescription>
               </AnimatedCardHeader>
               <AnimatedCardContent>
-                <ComparisonChart results={results.slice(0, 5)} metric="avg" />
+                <LazyComparisonChart results={results.slice(0, 5)} metric="avg" />
               </AnimatedCardContent>
             </AnimatedCard>
           )}
@@ -795,6 +793,9 @@ export default function Dashboard() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* FAQ Section */}
+        <FAQ />
       </div>
     </div>
   )

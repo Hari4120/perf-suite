@@ -60,7 +60,7 @@ const AnimatedCard = React.forwardRef<HTMLDivElement, AnimatedCardProps>(
         animate={inView ? "visible" : "hidden"}
         variants={variants}
         transition={{
-          duration: 0.6,
+          duration: 0.3, // Faster animations
           delay: delay,
           ease: "easeOut",
         }}
