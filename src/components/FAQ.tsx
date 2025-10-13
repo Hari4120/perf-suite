@@ -13,6 +13,7 @@ interface FAQItem {
 }
 
 const faqData: FAQItem[] = [
+  // Getting Started
   {
     question: "What is the Performance Benchmark Suite?",
     answer: "A professional-grade tool for testing API performance with multiple benchmark types including latency, throughput, load, and stress testing. It provides real-time analytics and beautiful visualizations to help you understand your API's performance characteristics.",
@@ -24,6 +25,23 @@ const faqData: FAQItem[] = [
     category: "getting-started"
   },
   {
+    question: "How do I get started with my first test?",
+    answer: "Simply enter your API endpoint URL in the configuration panel, select 'Latency Test' for beginners, keep the default settings, and click 'Run Benchmark'. Try our demo endpoint: https://httpbin.org/delay/1",
+    category: "getting-started"
+  },
+  {
+    question: "What are good APIs to test for practice?",
+    answer: "Try these public APIs: httpbin.org/delay/1 (simulates 1s delay), api.github.com/zen (GitHub's zen quotes), jsonplaceholder.typicode.com/posts/1 (fake REST API), or httpbin.org/status/200 (simple status response).",
+    category: "getting-started"
+  },
+  {
+    question: "How long should I run tests?",
+    answer: "For latency tests: 10-50 runs. For load/stress tests: 30-300 seconds depending on your needs. Start small and increase duration for more comprehensive results.",
+    category: "getting-started"
+  },
+
+  // Features
+  {
     question: "What do the statistics mean?",
     answer: "Average shows typical response time, Median is the middle value (less affected by outliers), 95th percentile means 95% of requests were faster than this value, and it's crucial for SLA monitoring.",
     category: "features"
@@ -33,6 +51,28 @@ const faqData: FAQItem[] = [
     answer: "Yes! You can test any accessible API endpoint. Make sure your API supports CORS for web-based testing, or use tools like ngrok to expose local development servers.",
     category: "features"
   },
+  {
+    question: "What's the difference between concurrent and sequential testing?",
+    answer: "Sequential (latency) tests send one request at a time to measure individual response times. Concurrent tests send multiple simultaneous requests to test how your API handles load.",
+    category: "features"
+  },
+  {
+    question: "How accurate are the measurements?",
+    answer: "Measurements include full round-trip time from browser to server. Results may vary due to network conditions, but trends and relative performance are reliable for comparison.",
+    category: "features"
+  },
+  {
+    question: "Can I test APIs with authentication?",
+    answer: "Currently, the tool tests publicly accessible endpoints. For authenticated APIs, ensure your endpoint accepts requests without auth headers, or test public endpoints of your service.",
+    category: "features"
+  },
+  {
+    question: "What request methods are supported?",
+    answer: "Currently supports GET requests. This covers most API testing scenarios including REST endpoints, status checks, and data retrieval endpoints.",
+    category: "features"
+  },
+
+  // Troubleshooting
   {
     question: "Why am I getting CORS errors?",
     answer: "CORS (Cross-Origin Resource Sharing) errors occur when testing APIs that don't allow browser requests from other domains. Use APIs with CORS headers or test public endpoints like httpbin.org for demos.",
@@ -44,6 +84,28 @@ const faqData: FAQItem[] = [
     category: "troubleshooting"
   },
   {
+    question: "The test is taking too long or timing out",
+    answer: "Increase the timeout value in settings (default is 10 seconds). If your API is very slow, consider testing with fewer concurrent requests or shorter duration.",
+    category: "troubleshooting"
+  },
+  {
+    question: "Why do I see 'Failed' requests?",
+    answer: "Failed requests occur due to timeouts, network errors, or server errors (4xx/5xx status codes). Check your API's health and network connectivity.",
+    category: "troubleshooting"
+  },
+  {
+    question: "Charts aren't loading or displaying",
+    answer: "Ensure JavaScript is enabled and you have a modern browser. Try refreshing the page or clearing browser cache if charts appear broken.",
+    category: "troubleshooting"
+  },
+  {
+    question: "Results seem too fast or too slow",
+    answer: "Very fast results (<10ms) might indicate cached responses. Very slow results might indicate network issues or server problems. Compare with other tools to verify.",
+    category: "troubleshooting"
+  },
+
+  // Advanced
+  {
     question: "How do I interpret the charts?",
     answer: "The trend chart shows individual request times, the histogram shows distribution patterns, and the comparison chart helps you compare different tests or endpoints over time.",
     category: "advanced"
@@ -51,6 +113,26 @@ const faqData: FAQItem[] = [
   {
     question: "Can I export and share results?",
     answer: "Yes! Click the Export button to download your results as JSON. You can share these files with your team or import them into other analysis tools.",
+    category: "advanced"
+  },
+  {
+    question: "What's the best way to benchmark API performance?",
+    answer: "Run baseline latency tests first, then gradually increase load. Test at different times, from different locations if possible, and always test the same endpoints for consistent comparison.",
+    category: "advanced"
+  },
+  {
+    question: "How do I set up performance monitoring?",
+    answer: "Use this tool for periodic testing, export results, and track trends over time. Set performance budgets (e.g., 95th percentile < 500ms) and test before deployments.",
+    category: "advanced"
+  },
+  {
+    question: "Can I integrate this with CI/CD pipelines?",
+    answer: "While this is a web-based tool, you can use the same concepts with command-line tools like curl, wrk, or apache bench in your CI/CD for automated performance testing.",
+    category: "advanced"
+  },
+  {
+    question: "What performance metrics should I focus on?",
+    answer: "For user-facing APIs: focus on 95th percentile and median. For internal APIs: average and max. For SLAs: 99th percentile. Always monitor error rates alongside response times.",
     category: "advanced"
   }
 ]
@@ -128,7 +210,7 @@ export default function FAQ() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.02 }}
                 className="border-b last:border-b-0"
               >
                 <button
@@ -146,7 +228,7 @@ export default function FAQ() {
                     </div>
                     <motion.div
                       animate={{ rotate: openQuestions.has(index) ? 180 : 0 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ duration: 0.1 }}
                     >
                       <ChevronDown className="h-5 w-5 text-muted-foreground group-hover:text-foreground" />
                     </motion.div>
@@ -159,7 +241,7 @@ export default function FAQ() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3, ease: "easeInOut" }}
+                      transition={{ duration: 0.15, ease: "easeInOut" }}
                       className="overflow-hidden"
                     >
                       <div className="px-6 pb-6 pl-12">

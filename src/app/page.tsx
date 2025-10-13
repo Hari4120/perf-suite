@@ -442,63 +442,36 @@ export default function Dashboard() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -20, scale: 0.8 }}
                   transition={{ 
-                    duration: 0.3, 
-                    delay: stat.delay * 0.05, // Much faster stagger
+                    duration: 0.15, 
+                    delay: stat.delay * 0.02,
                     ease: "easeOut"
                   }}
                   whileHover={{ 
-                    scale: 1.05, 
-                    y: -5,
-                    transition: { duration: 0.2 }
+                    scale: 1.02, 
+                    y: -2,
+                    transition: { duration: 0.1 }
                   }}
                   className={cn(
-                    "relative overflow-hidden rounded-lg border p-4 transition-all duration-300 cursor-help group",
+                    "relative overflow-hidden rounded-lg border p-4 transition-all duration-150 group",
                     stat.bgColor,
                     stat.borderColor,
-                    "hover:shadow-lg hover:shadow-primary/5"
+                    "hover:shadow-md"
                   )}
-                  title={stat.description}
                 >
-                  {/* Background animation */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                  
                   {/* Icon */}
-                  <motion.div
-                    className="absolute top-2 right-2 text-lg opacity-20 group-hover:opacity-60"
-                    animate={{ rotate: [0, 10, -10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: stat.delay }}
-                  >
+                  <div className="absolute top-2 right-2 text-lg opacity-30">
                     {stat.icon}
-                  </motion.div>
+                  </div>
                   
-                  {/* Value with counting animation */}
-                  <motion.div 
-                    className={cn("text-2xl font-bold mb-1", stat.color)}
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ 
-                      type: "spring", 
-                      stiffness: 200, 
-                      delay: stat.delay + 0.2 
-                    }}
-                  >
+                  {/* Value */}
+                  <div className={cn("text-2xl font-bold mb-1", stat.color)}>
                     {stat.value}
-                  </motion.div>
+                  </div>
                   
                   {/* Label */}
                   <div className="text-sm text-muted-foreground font-medium">
                     {stat.label}
                   </div>
-                  
-                  {/* Tooltip on hover */}
-                  <motion.div
-                    className="absolute -top-12 left-1/2 transform -translate-x-1/2 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10"
-                    initial={{ y: 10, opacity: 0 }}
-                    whileHover={{ y: 0, opacity: 1 }}
-                  >
-                    {stat.description}
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900 dark:border-t-gray-100" />
-                  </motion.div>
                 </motion.div>
               ))}
             </motion.div>
@@ -513,14 +486,12 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -30 }}
-              transition={{ duration: 0.6, staggerChildren: 0.2 }}
+              transition={{ duration: 0.3, staggerChildren: 0.05 }}
             >
-              <AnimatedCard delay={0.3}>
+              <AnimatedCard delay={0.05}>
                 <AnimatedCardHeader>
                   <AnimatedCardTitle className="flex items-center space-x-2">
-                    <motion.div whileHover={{ scale: 1.2, rotate: 360 }} transition={{ duration: 0.3 }}>
-                      <Clock className="h-5 w-5" />
-                    </motion.div>
+                    <Clock className="h-5 w-5" />
                     <span>Response Time Trend</span>
                   </AnimatedCardTitle>
                 </AnimatedCardHeader>
@@ -529,12 +500,10 @@ export default function Dashboard() {
                 </AnimatedCardContent>
               </AnimatedCard>
               
-              <AnimatedCard delay={0.4}>
+              <AnimatedCard delay={0.1}>
                 <AnimatedCardHeader>
                   <AnimatedCardTitle className="flex items-center space-x-2">
-                    <motion.div whileHover={{ scale: 1.2, rotate: -360 }} transition={{ duration: 0.3 }}>
-                      <BarChart3 className="h-5 w-5" />
-                    </motion.div>
+                    <BarChart3 className="h-5 w-5" />
                     <span>Response Time Distribution</span>
                   </AnimatedCardTitle>
                 </AnimatedCardHeader>
@@ -549,12 +518,10 @@ export default function Dashboard() {
         {/* Comparison Chart */}
         <AnimatePresence>
           {results.length > 1 && (
-            <AnimatedCard delay={0.5}>
+            <AnimatedCard delay={0.05}>
               <AnimatedCardHeader>
                 <AnimatedCardTitle className="flex items-center space-x-2">
-                  <motion.div whileHover={{ scale: 1.2, rotateY: 180 }} transition={{ duration: 0.3 }}>
-                    <GitCompare className="h-5 w-5" />
-                  </motion.div>
+                  <GitCompare className="h-5 w-5" />
                   <span>Performance Comparison</span>
                 </AnimatedCardTitle>
                 <AnimatedCardDescription>
@@ -571,7 +538,7 @@ export default function Dashboard() {
         {/* Results History */}
         <AnimatePresence>
           {results.length > 0 && (
-            <AnimatedCard delay={0.6}>
+            <AnimatedCard delay={0.05}>
               <AnimatedCardHeader>
                 <AnimatedCardTitle>Recent Results</AnimatedCardTitle>
                 <AnimatedCardDescription>
@@ -586,8 +553,8 @@ export default function Dashboard() {
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       exit={{ opacity: 0, x: 20 }}
-                      transition={{ delay: index * 0.1 }}
-                      whileHover={{ scale: 1.02, x: 5 }}
+                      transition={{ delay: index * 0.02 }}
+                      whileHover={{ scale: 1.01, x: 2 }}
                       className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group"
                     >
                       <div className="flex-1">
@@ -599,12 +566,9 @@ export default function Dashboard() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <motion.div 
-                          className="font-mono text-sm"
-                          whileHover={{ scale: 1.1 }}
-                        >
+                        <div className="font-mono text-sm">
                           {result.stats ? formatDuration(result.stats.avg) : 'Failed'}
-                        </motion.div>
+                        </div>
                         <div className="text-xs text-muted-foreground">
                           {result.metadata.runs} runs
                         </div>
@@ -624,24 +588,12 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -50 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
             >
-              <AnimatedCard delay={0.3}>
+              <AnimatedCard delay={0.05}>
                 <AnimatedCardHeader>
                   <AnimatedCardTitle className="flex items-center space-x-2">
-                    <motion.div
-                      animate={{ 
-                        scale: [1, 1.1, 1],
-                        rotate: [0, 5, -5, 0]
-                      }}
-                      transition={{ 
-                        duration: 3,
-                        repeat: Infinity,
-                        ease: "easeInOut"
-                      }}
-                    >
-                      👋
-                    </motion.div>
+                    <span>👋</span>
                     <span>Getting Started</span>
                   </AnimatedCardTitle>
                   <AnimatedCardDescription>
@@ -650,16 +602,11 @@ export default function Dashboard() {
                 </AnimatedCardHeader>
                 <AnimatedCardContent>
                   <div className="space-y-6">
-                    <motion.p 
-                      className="text-muted-foreground text-center"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.8 }}
-                    >
+                    <p className="text-muted-foreground text-center">
                       This professional-grade tool helps you analyze API performance with comprehensive benchmarking capabilities.
                       <br />
                       <span className="text-primary font-medium">Hover over each test type to learn more!</span>
-                    </motion.p>
+                    </p>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {[
@@ -669,7 +616,7 @@ export default function Dashboard() {
                           description: "Measure response times with sequential requests to understand baseline performance.",
                           color: "border-blue-200 dark:border-blue-800 hover:bg-blue-50 dark:hover:bg-blue-950",
                           iconColor: "text-blue-600",
-                          delay: 1,
+                          delay: 0.05,
                           details: "Perfect for SLA validation and performance regression testing"
                         },
                         {
@@ -678,7 +625,7 @@ export default function Dashboard() {
                           description: "Test concurrent request handling to measure maximum throughput capacity.",
                           color: "border-green-200 dark:border-green-800 hover:bg-green-50 dark:hover:bg-green-950",
                           iconColor: "text-green-600",
-                          delay: 1.2,
+                          delay: 0.1,
                           details: "Ideal for scalability assessment and resource utilization analysis"
                         },
                         {
@@ -687,7 +634,7 @@ export default function Dashboard() {
                           description: "Simulate realistic load patterns to understand performance under normal conditions.",
                           color: "border-orange-200 dark:border-orange-800 hover:bg-orange-50 dark:hover:bg-orange-950",
                           iconColor: "text-orange-600",
-                          delay: 1.4,
+                          delay: 0.15,
                           details: "Great for production readiness validation and capacity planning"
                         },
                         {
@@ -696,47 +643,33 @@ export default function Dashboard() {
                           description: "Push your API to its limits to identify breaking points and failure modes.",
                           color: "border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950",
                           iconColor: "text-red-600",
-                          delay: 1.6,
+                          delay: 0.2,
                           details: "Essential for failure mode analysis and system resilience testing"
                         }
-                      ].map((item, index) => (
+                      ].map((item) => (
                         <motion.div
                           key={item.title}
                           initial={{ opacity: 0, y: 30, rotateX: -15 }}
                           animate={{ opacity: 1, y: 0, rotateX: 0 }}
                           transition={{ 
-                            duration: 0.6, 
-                            delay: item.delay,
+                            duration: 0.2, 
+                            delay: item.delay * 0.5,
                             ease: "easeOut"
                           }}
                           whileHover={{ 
-                            scale: 1.05, 
-                            y: -5,
-                            transition: { duration: 0.2 }
+                            scale: 1.02, 
+                            y: -2,
+                            transition: { duration: 0.1 }
                           }}
                           className={cn(
                             "relative p-6 border rounded-lg cursor-pointer transition-all duration-300 group overflow-hidden",
                             item.color
                           )}
                         >
-                          {/* Background animation */}
-                          <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                          
-                          {/* Floating icon */}
-                          <motion.div
-                            className="text-3xl mb-3 inline-block"
-                            animate={{ 
-                              y: [0, -5, 0],
-                              rotate: [0, 5, -5, 0]
-                            }}
-                            transition={{ 
-                              duration: 3,
-                              repeat: Infinity,
-                              delay: index * 0.5
-                            }}
-                          >
+                          {/* Icon */}
+                          <div className="text-3xl mb-3 inline-block">
                             {item.icon}
-                          </motion.div>
+                          </div>
                           
                           <h3 className={cn("font-semibold mb-2 text-lg", item.iconColor)}>
                             {item.title}
@@ -746,47 +679,25 @@ export default function Dashboard() {
                             {item.description}
                           </p>
                           
-                          {/* Hidden details that appear on hover */}
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            whileHover={{ opacity: 1, height: "auto" }}
-                            className="text-xs text-muted-foreground italic border-t pt-2 mt-2"
-                          >
+                          {/* Details on hover */}
+                          <div className="text-xs text-muted-foreground italic border-t pt-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                             💡 {item.details}
-                          </motion.div>
-                          
-                          {/* Animated border */}
-                          <div className="absolute inset-0 border-2 border-transparent group-hover:border-primary/20 rounded-lg transition-colors duration-300" />
+                          </div>
                         </motion.div>
                       ))}
                     </div>
                     
                     {/* Call to action */}
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: 2, duration: 0.5 }}
-                      className="text-center mt-8 p-6 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg border"
-                    >
-                      <motion.div
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                        className="text-2xl mb-2"
-                      >
-                        🎯
-                      </motion.div>
+                    <div className="text-center mt-8 p-6 bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg border">
+                      <div className="text-2xl mb-2">🎯</div>
                       <h3 className="font-semibold text-lg mb-2">Ready to start testing?</h3>
                       <p className="text-sm text-muted-foreground mb-4">
                         Enter an API URL above and select your preferred test type to begin benchmarking!
                       </p>
-                      <motion.div
-                        animate={{ x: [0, 5, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="inline-flex items-center text-primary text-sm font-medium"
-                      >
+                      <div className="inline-flex items-center text-primary text-sm font-medium">
                         Try: https://httpbin.org/delay/1 for a quick demo →
-                      </motion.div>
-                    </motion.div>
+                      </div>
+                    </div>
                   </div>
                 </AnimatedCardContent>
               </AnimatedCard>

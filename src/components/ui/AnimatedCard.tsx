@@ -41,8 +41,8 @@ const AnimatedCard = React.forwardRef<HTMLDivElement, AnimatedCardProps>(
 
     const hoverVariants = hover
       ? {
-          scale: 1.02,
-          y: -8,
+          scale: 1.01,
+          y: -2,
         }
       : {}
 
@@ -60,14 +60,14 @@ const AnimatedCard = React.forwardRef<HTMLDivElement, AnimatedCardProps>(
         animate={inView ? "visible" : "hidden"}
         variants={variants}
         transition={{
-          duration: 0.3, // Faster animations
+          duration: 0.15,
           delay: delay,
           ease: "easeOut",
         }}
         whileHover={hoverVariants}
         className={cn(
-          "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300",
-          hover && "hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20",
+          "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-150",
+          hover && "hover:shadow-md hover:border-primary/20",
           className
         )}
         {...props}
