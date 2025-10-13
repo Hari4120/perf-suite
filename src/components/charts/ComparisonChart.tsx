@@ -47,9 +47,19 @@ export default function ComparisonChart({ results, metric = 'avg' }: ComparisonC
   const textColor = isDark ? "rgba(229, 231, 235, 0.8)" : "rgba(55, 65, 81, 0.8)"
   
   const labels = validResults.map((result) => {
-    const url = new URL(result.url)
-    const domain = url.hostname
-    return `${domain} (${result.benchmarkType})`
+    try {
+      // Try to parse as URL first (for API tests)
+      const url = new URL(result.url)
+      const domain = url.hostname
+      return `${domain} (${result.benchmarkType})`
+    } catch {
+      // If not a valid URL, use the result.url as-is (for network tests)
+      // Truncate long test names for better chart readability
+      const displayName = result.url.length > 20 
+        ? result.url.substring(0, 17) + '...' 
+        : result.url
+      return `${displayName} (${result.benchmarkType})`
+    }
   })
   
   const data = validResults.map(result => result.stats![metric])
