@@ -11,11 +11,23 @@ import { LoadingSpinner } from "@/components/ui/LoadingSpinner"
 import FAQ from "@/components/FAQ"
 import NetworkTests from "@/components/NetworkTests"
 import RealTimeMonitor from "@/components/RealTimeMonitor"
+import KnowledgeBase from "@/components/KnowledgeBase"
+import HelpSystem from "@/components/HelpSystem"
+import ExportSystem from "@/components/ExportSystem"
+import Footer from "@/components/Footer"
+import PerformanceInsights from "@/components/PerformanceInsights"
+import { useNotify } from "@/components/NotificationSystem"
+import { Tooltip } from "@/components/ui/Tooltip"
+import Performance3D from "@/components/Performance3D"
+import AnomalyDetector from "@/components/AnomalyDetector"
+import AIRecommendations from "@/components/AIRecommendations"
+import IntelligentComparator from "@/components/IntelligentComparator"
 import { LazyLatencyChart, LazyHistogramChart, LazyComparisonChart, LazyRealTimeChart } from "@/components/LazyCharts"
 import { formatDuration, cn } from "@/lib/utils"
 import type { BenchmarkResult, BenchmarkConfig, BenchmarkType, BenchmarkProgress } from "@/types/benchmark"
 
 export default function Dashboard() {
+  const notify = useNotify()
   const [url, setUrl] = useState("")
   const [benchmarkType, setBenchmarkType] = useState<BenchmarkType>("latency")
   const [runs, setRuns] = useState(10)
@@ -53,7 +65,7 @@ export default function Dashboard() {
     const networkTests = ['speed-test', 'buffer-bloat', 'dns-test', 'network-quality']
     
     if (!networkTests.includes(benchmarkType) && !url.trim()) {
-      alert('Please enter a valid URL')
+      notify.warning('URL Required', 'Please enter a valid URL to run the benchmark')
       return
     }
     
@@ -97,41 +109,32 @@ export default function Dashboard() {
       setResults(prev => [result, ...prev.slice(0, 9)]) // Keep last 10 results
       setRealtimeData(result.results.filter(r => r > 0))
       
+      // Show success notification
+      const avgTime = result.stats?.avg || 0
+      const successRate = result.stats ? (((result.results.length - result.stats.failed) / result.results.length) * 100) : 0
+      notify.success(
+        'Benchmark Complete!',
+        `Average response time: ${avgTime.toFixed(2)}ms • Success rate: ${successRate.toFixed(1)}%`
+      )
+      
     } catch (error) {
       console.error('Benchmark error:', error)
-      alert(error instanceof Error ? error.message : 'Benchmark failed')
+      const errorMessage = error instanceof Error ? error.message : 'Benchmark failed'
+      notify.error('Benchmark Failed', errorMessage)
     } finally {
       setIsRunning(false)
       setProgress(null)
     }
   }
   
-  const exportResults = () => {
-    const exportData = {
-      results,
-      exportedAt: Date.now(),
-      version: '1.0.0'
-    }
-    
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: 'application/json'
-    })
-    
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `benchmark-results-${new Date().toISOString().slice(0, 10)}.json`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
   
   const clearResults = () => {
     if (confirm('Are you sure you want to clear all results?')) {
+      const resultCount = results.length
       setResults([])
       setCurrentResult(null)
       localStorage.removeItem('benchmark-results')
+      notify.info('Results Cleared', `Removed ${resultCount} benchmark results`)
     }
   }
   
@@ -139,7 +142,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <motion.header 
-        className="border-b bg-card/95 backdrop-blur-sm sticky top-0 z-50"
+        className="border-b bg-card/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
@@ -152,50 +155,76 @@ export default function Dashboard() {
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <motion.div
                   whileHover={{ rotate: 360, scale: 1.1 }}
                   transition={{ duration: 0.5 }}
+                  className="relative"
                 >
-                  <Activity className="h-8 w-8 text-primary" />
+                  <Activity className="h-9 w-9 text-primary" />
+                  <motion.div 
+                    className="absolute -inset-1 rounded-full bg-primary/20"
+                    animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.2, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  />
                 </motion.div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  Performance Benchmark Suite
-                </h1>
+                <div>
+                  <h1 className="text-2xl font-bold text-foreground leading-none">
+                    Performance Benchmark Suite
+                  </h1>
+                  <p className="text-sm text-muted-foreground font-medium mt-1">
+                    Professional Network Diagnostics & API Testing Platform
+                  </p>
+                </div>
               </div>
-              <motion.span 
-                className="text-sm text-muted-foreground bg-secondary px-2 py-1 rounded"
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.4 }}
-              >
-                v1.0.0
-              </motion.span>
+              <div className="flex items-center space-x-2">
+                <motion.span 
+                  className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded-full font-mono"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.3, delay: 0.4 }}
+                >
+                  v1.0.0
+                </motion.span>
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ duration: 0.4, delay: 0.5 }}
+                  className="flex items-center space-x-1 bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-300 px-2 py-1 rounded-full text-xs font-medium"
+                >
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                  <span>Live</span>
+                </motion.div>
+              </div>
             </motion.div>
             <motion.div 
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-3"
               initial={{ x: 50, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <AnimatedButton
-                variant="outline"
-                size="sm"
-                onClick={exportResults}
-                disabled={results.length === 0}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </AnimatedButton>
-              <AnimatedButton
-                variant="outline"
-                size="sm"
-                onClick={clearResults}
-                disabled={results.length === 0}
-              >
-                Clear All
-              </AnimatedButton>
-              <ThemeToggle />
+              <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
+                <Clock className="h-4 w-4" />
+                <span>Real-time monitoring</span>
+                <div className="w-px h-4 bg-border mx-2" />
+                <BarChart3 className="h-4 w-4" />
+                <span>Advanced analytics</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <ExportSystem 
+                  results={results}
+                  disabled={results.length === 0}
+                />
+                <AnimatedButton
+                  variant="outline"
+                  size="sm"
+                  onClick={clearResults}
+                  disabled={results.length === 0}
+                >
+                  Clear All
+                </AnimatedButton>
+                <ThemeToggle />
+              </div>
             </motion.div>
           </div>
         </div>
@@ -219,7 +248,9 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2">Target URL</label>
+                  <Tooltip content="Enter the API endpoint URL you want to test. For network tests, this field is optional.">
+                    <label className="block text-sm font-medium mb-2 cursor-help">Target URL</label>
+                  </Tooltip>
                   <Input
                     type="url"
                     placeholder="https://api.example.com/endpoint"
@@ -230,7 +261,9 @@ export default function Dashboard() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Benchmark Type</label>
+                  <Tooltip content="Choose the type of test to perform. Latency tests response time, throughput tests concurrent capacity, load tests realistic traffic, stress tests breaking points, and network tests measure internet connection quality.">
+                    <label className="block text-sm font-medium mb-2 cursor-help">Benchmark Type</label>
+                  </Tooltip>
                   <select
                     className="w-full h-10 px-3 py-2 text-sm bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
                     value={benchmarkType}
@@ -252,7 +285,9 @@ export default function Dashboard() {
               <div className="space-y-4">
                 {benchmarkType === 'latency' ? (
                   <div>
-                    <label className="block text-sm font-medium mb-2">Number of Runs</label>
+                    <Tooltip content="Number of sequential requests to make. More runs provide better statistical accuracy but take longer.">
+                      <label className="block text-sm font-medium mb-2 cursor-help">Number of Runs</label>
+                    </Tooltip>
                     <Input
                       type="number"
                       min="1"
@@ -265,7 +300,9 @@ export default function Dashboard() {
                 ) : (
                   <>
                     <div>
-                      <label className="block text-sm font-medium mb-2">Concurrent Requests</label>
+                      <Tooltip content="Number of requests to send simultaneously. Higher values test server capacity under load but may impact your local performance.">
+                        <label className="block text-sm font-medium mb-2 cursor-help">Concurrent Requests</label>
+                      </Tooltip>
                       <Input
                         type="number"
                         min="1"
@@ -276,7 +313,9 @@ export default function Dashboard() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-2">Duration (seconds)</label>
+                      <Tooltip content="How long to sustain the test load. Longer durations provide more comprehensive results and help identify performance patterns.">
+                        <label className="block text-sm font-medium mb-2 cursor-help">Duration (seconds)</label>
+                      </Tooltip>
                       <Input
                         type="number"
                         min="5"
@@ -290,7 +329,9 @@ export default function Dashboard() {
                 )}
                 
                 <div>
-                  <label className="block text-sm font-medium mb-2">Timeout (ms)</label>
+                  <Tooltip content="Maximum time to wait for each request response. Higher values allow slow endpoints to complete, lower values identify unresponsive services faster.">
+                    <label className="block text-sm font-medium mb-2 cursor-help">Timeout (ms)</label>
+                  </Tooltip>
                   <Input
                     type="number"
                     min="1000"
@@ -531,6 +572,41 @@ export default function Dashboard() {
           )}
         </AnimatePresence>
         
+        {/* 3D Performance Visualization */}
+        <AnimatePresence>
+          {results.length >= 3 && (
+            <Performance3D results={results} />
+          )}
+        </AnimatePresence>
+
+        {/* Performance Insights */}
+        <AnimatePresence>
+          {results.length > 0 && (
+            <PerformanceInsights results={results} />
+          )}
+        </AnimatePresence>
+
+        {/* AI-Powered Recommendations */}
+        <AnimatePresence>
+          {results.length >= 3 && (
+            <AIRecommendations results={results} />
+          )}
+        </AnimatePresence>
+
+        {/* Anomaly Detection */}
+        <AnimatePresence>
+          {results.length >= 5 && (
+            <AnomalyDetector results={results} />
+          )}
+        </AnimatePresence>
+
+        {/* Intelligent Comparator */}
+        <AnimatePresence>
+          {results.length >= 2 && (
+            <IntelligentComparator results={results} />
+          )}
+        </AnimatePresence>
+
         {/* Comparison Chart */}
         <AnimatePresence>
           {results.length > 1 && (
@@ -730,9 +806,18 @@ export default function Dashboard() {
         {/* Real-Time Network Monitor */}
         <RealTimeMonitor />
         
+        {/* Knowledge Base */}
+        <KnowledgeBase />
+        
         {/* FAQ Section */}
         <FAQ />
       </div>
+      
+      {/* Footer */}
+      <Footer />
+      
+      {/* Help System */}
+      <HelpSystem context="benchmark" />
     </div>
   )
 }
