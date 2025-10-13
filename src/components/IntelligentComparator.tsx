@@ -1,15 +1,13 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import {
   GitCompare,
   TrendingUp,
   TrendingDown,
   Zap,
-  ArrowRight,
   Check,
-  X,
   BarChart3,
   Target,
   Flame,

@@ -136,8 +136,8 @@ Please describe what you were doing when this error occurred:
           <AnimatedCardContent className="space-y-6">
             <div className="text-center text-muted-foreground">
               <p className="mb-4">
-                We encountered an unexpected error while running the performance benchmark suite. 
-                This shouldn't happen, and we apologize for the inconvenience.
+                We encountered an unexpected error while running the performance benchmark suite.
+                This shouldn&apos;t happen, and we apologize for the inconvenience.
               </p>
             </div>
 

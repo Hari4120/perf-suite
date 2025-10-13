@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Activity, BarChart3, Clock, Zap, Download, GitCompare, Settings, Play, Pause } from "lucide-react"
+import { Activity, BarChart3, Clock, Zap, GitCompare, Settings, Play, Pause } from "lucide-react"
 import { AnimatedButton } from "@/components/ui/AnimatedButton"
 import { Input } from "@/components/ui/Input"
 import { AnimatedCard, AnimatedCardHeader, AnimatedCardTitle, AnimatedCardDescription, AnimatedCardContent } from "@/components/ui/AnimatedCard"
@@ -24,7 +24,7 @@ import AIRecommendations from "@/components/AIRecommendations"
 import IntelligentComparator from "@/components/IntelligentComparator"
 import { LazyLatencyChart, LazyHistogramChart, LazyComparisonChart, LazyRealTimeChart } from "@/components/LazyCharts"
 import { formatDuration, cn } from "@/lib/utils"
-import type { BenchmarkResult, BenchmarkConfig, BenchmarkType, BenchmarkProgress } from "@/types/benchmark"
+import type { BenchmarkResult, BenchmarkType, BenchmarkProgress } from "@/types/benchmark"
 
 export default function Dashboard() {
   const notify = useNotify()
