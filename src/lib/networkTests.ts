@@ -9,6 +9,26 @@ export interface NetworkTestResult {
   qualityScore: number // 0-100
   connectionType: string
   testEndpoint: string
+  testDuration?: number // seconds
+  measurements?: TestMeasurement[]
+}
+
+export interface TestMeasurement {
+  timestamp: number
+  type: 'latency' | 'speed' | 'dns' | 'quality'
+  value: number
+  score: number
+  phase: string
+}
+
+export interface TestProgress {
+  phase: 'initializing' | 'latency' | 'speed' | 'dns' | 'buffer-bloat' | 'finalizing' | 'complete'
+  progress: number // 0-100
+  currentTest: string
+  elapsed: number // seconds
+  estimated: number // total estimated seconds
+  liveScore: number // current quality score
+  measurements: TestMeasurement[]
 }
 
 // Reliable test endpoints that support CORS
@@ -49,12 +69,32 @@ async function getBestEndpoint(): Promise<string> {
   return working.length > 0 ? working[0].endpoint : TEST_ENDPOINTS[0]
 }
 
-export async function runSpeedTest(): Promise<NetworkTestResult> {
+export async function runSpeedTest(onProgress?: (progress: TestProgress) => void): Promise<NetworkTestResult> {
+  const startTime = Date.now()
+  const measurements: TestMeasurement[] = []
+  let currentScore = 0
+  
+  const updateProgress = (phase: TestProgress['phase'], progress: number, currentTest: string, score = currentScore) => {
+    const elapsed = (Date.now() - startTime) / 1000
+    onProgress?.({
+      phase,
+      progress,
+      currentTest,
+      elapsed,
+      estimated: 90, // 1.5 minutes total
+      liveScore: score,
+      measurements: [...measurements]
+    })
+  }
+  
+  updateProgress('initializing', 5, 'Finding best server...')
   const bestEndpoint = await getBestEndpoint()
   
-  // Test latency with multiple measurements
+  updateProgress('latency', 10, 'Testing connection latency...')
+  
+  // Extended latency testing with live updates (30 seconds)
   const latencyTests: number[] = []
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 15; i++) {
     try {
       const start = performance.now()
       await fetch(bestEndpoint, { 
@@ -62,10 +102,28 @@ export async function runSpeedTest(): Promise<NetworkTestResult> {
         cache: 'no-cache',
         signal: AbortSignal.timeout(5000)
       })
-      latencyTests.push(performance.now() - start)
+      const latency = performance.now() - start
+      latencyTests.push(latency)
+      
+      // Add measurement
+      const latencyScore = Math.max(0, 100 - latency / 5)
+      measurements.push({
+        timestamp: Date.now(),
+        type: 'latency',
+        value: latency,
+        score: latencyScore,
+        phase: 'Latency Test'
+      })
+      
+      currentScore = latencyScore
+      updateProgress('latency', 10 + (i + 1) * 2, `Latency test ${i + 1}/15: ${Math.round(latency)}ms`, currentScore)
+      
     } catch {
-      latencyTests.push(1000) // Fallback high latency
+      latencyTests.push(1000)
     }
+    
+    // Small delay between tests
+    if (i < 14) await new Promise(resolve => setTimeout(resolve, 1500))
   }
   
   const avgLatency = latencyTests.reduce((a, b) => a + b, 0) / latencyTests.length
@@ -73,44 +131,125 @@ export async function runSpeedTest(): Promise<NetworkTestResult> {
     latencyTests.reduce((sum, lat) => sum + Math.pow(lat - avgLatency, 2), 0) / latencyTests.length
   )
   
-  // Speed test using available endpoints
-  let downloadSpeed = 0
-  try {
-    const testFile = SPEED_TEST_FILES[0] // Use smallest reliable file
-    const start = performance.now()
-    
-    const response = await fetch(testFile, { 
-      cache: 'no-cache',
-      signal: AbortSignal.timeout(10000)
-    })
-    
-    if (response.ok) {
-      const data = await response.arrayBuffer()
-      const duration = (performance.now() - start) / 1000 // seconds
-      const sizeBytes = data.byteLength
-      const sizeMB = sizeBytes / (1024 * 1024)
-      downloadSpeed = (sizeMB * 8) / duration // Mbps
+  updateProgress('speed', 40, 'Testing download speeds...')
+  
+  // Extended speed testing with multiple files (45 seconds)
+  const speedTests: number[] = []
+  for (let fileIndex = 0; fileIndex < SPEED_TEST_FILES.length; fileIndex++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const testFile = SPEED_TEST_FILES[fileIndex]
+        const start = performance.now()
+        
+        const response = await fetch(testFile, { 
+          cache: 'no-cache',
+          signal: AbortSignal.timeout(15000)
+        })
+        
+        if (response.ok) {
+          const data = await response.arrayBuffer()
+          const duration = (performance.now() - start) / 1000
+          const sizeBytes = data.byteLength
+          const sizeMB = sizeBytes / (1024 * 1024)
+          const downloadSpeed = (sizeMB * 8) / duration
+          
+          speedTests.push(downloadSpeed)
+          
+          // Add measurement
+          const speedScore = Math.min(100, downloadSpeed * 2)
+          measurements.push({
+            timestamp: Date.now(),
+            type: 'speed',
+            value: downloadSpeed,
+            score: speedScore,
+            phase: 'Speed Test'
+          })
+          
+          currentScore = (currentScore + speedScore) / 2
+          updateProgress('speed', 40 + (fileIndex * 3 + attempt + 1) * 2, 
+            `Speed test: ${downloadSpeed.toFixed(1)} Mbps`, currentScore)
+        }
+      } catch {
+        speedTests.push(Math.max(0.1, 50 - avgLatency / 10))
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 2000))
     }
-  } catch {
-    // Estimate speed based on latency if download test fails
-    downloadSpeed = Math.max(0.1, 50 - avgLatency / 10)
   }
   
-  // Estimate upload speed (typically 10-20% of download for most connections)
-  const uploadSpeed = downloadSpeed * 0.15
+  const avgDownloadSpeed = speedTests.length > 0 
+    ? speedTests.reduce((a, b) => a + b, 0) / speedTests.length 
+    : Math.max(0.1, 50 - avgLatency / 10)
   
-  const qualityScore = calculateQualityScore(downloadSpeed, uploadSpeed, avgLatency, jitter)
+  // Estimate upload speed
+  const uploadSpeed = avgDownloadSpeed * 0.15
+  
+  updateProgress('dns', 65, 'Testing DNS resolution...')
+  
+  // DNS testing (15 seconds)
+  const dnsTests: number[] = []
+  const testDomains = [
+    'https://www.google.com/favicon.ico',
+    'https://httpbin.org/get',
+    'https://api.github.com/zen'
+  ]
+  
+  for (let i = 0; i < 8; i++) {
+    const domain = testDomains[i % testDomains.length]
+    try {
+      const start = performance.now()
+      await fetch(domain, { method: 'HEAD', cache: 'no-cache', signal: AbortSignal.timeout(5000) })
+      const dnsTime = performance.now() - start
+      dnsTests.push(dnsTime)
+      
+      const dnsScore = Math.max(0, 100 - dnsTime / 2)
+      measurements.push({
+        timestamp: Date.now(),
+        type: 'dns',
+        value: dnsTime,
+        score: dnsScore,
+        phase: 'DNS Test'
+      })
+      
+      updateProgress('dns', 65 + (i + 1) * 3, `DNS test ${i + 1}/8: ${Math.round(dnsTime)}ms`)
+    } catch {
+      dnsTests.push(100)
+    }
+    
+    if (i < 7) await new Promise(resolve => setTimeout(resolve, 1500))
+  }
+  
+  const avgDNS = dnsTests.length > 0 ? dnsTests.reduce((a, b) => a + b, 0) / dnsTests.length : 50
+  
+  updateProgress('finalizing', 90, 'Calculating final scores...')
+  
+  const finalScore = calculateQualityScore(avgDownloadSpeed, uploadSpeed, avgLatency, jitter)
+  
+  // Add final measurement
+  measurements.push({
+    timestamp: Date.now(),
+    type: 'quality',
+    value: finalScore,
+    score: finalScore,
+    phase: 'Final Score'
+  })
+  
+  updateProgress('complete', 100, 'Test complete!', finalScore)
+  
+  const testDuration = (Date.now() - startTime) / 1000
   
   return {
-    downloadSpeed: Math.round(downloadSpeed * 100) / 100,
+    downloadSpeed: Math.round(avgDownloadSpeed * 100) / 100,
     uploadSpeed: Math.round(uploadSpeed * 100) / 100,
     latency: Math.round(avgLatency),
     jitter: Math.round(jitter),
-    bufferBloat: 0, // Will be set by buffer bloat test
-    dnsResolution: 0, // Will be set by DNS test
-    qualityScore,
-    connectionType: getConnectionType(downloadSpeed),
-    testEndpoint: bestEndpoint
+    bufferBloat: 0,
+    dnsResolution: Math.round(avgDNS),
+    qualityScore: finalScore,
+    connectionType: getConnectionType(avgDownloadSpeed),
+    testEndpoint: bestEndpoint,
+    testDuration: Math.round(testDuration),
+    measurements
   }
 }
 
