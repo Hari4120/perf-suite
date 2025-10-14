@@ -279,20 +279,17 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                 <div className="text-xs text-muted-foreground">Mbps</div>
               </div>
 
-              {/* Upload Speed */}
-              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
+              {/* Upload Speed - Estimated */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border border-dashed">
                 <div className="flex items-center space-x-2 mb-1">
                   <Upload className="h-4 w-4 text-green-600" />
-                  <span className="text-xs font-medium text-muted-foreground">Upload</span>
+                  <span className="text-xs font-medium text-muted-foreground">Upload (Est.)</span>
                 </div>
-                <motion.div
-                  key={testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Upload Test').slice(-1)[0]?.value || 0}
-                  initial={{ scale: 1.05 }}
-                  animate={{ scale: 1 }}
-                  className="text-xl font-bold text-green-600"
-                >
-                  {testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Upload Test').slice(-1)[0]?.value.toFixed(1) || '--'}
-                </motion.div>
+                <div className="text-xl font-bold text-green-600/70">
+                  {testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Speed Test').slice(-1)[0]
+                    ? (testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Speed Test').slice(-1)[0].value * 0.15).toFixed(1)
+                    : '--'}
+                </div>
                 <div className="text-xs text-muted-foreground">Mbps</div>
               </div>
 
@@ -313,20 +310,23 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                 <div className="text-xs text-muted-foreground">ms</div>
               </div>
 
-              {/* DNS */}
+              {/* Jitter */}
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
                 <div className="flex items-center space-x-2 mb-1">
-                  <Server className="h-4 w-4 text-purple-600" />
-                  <span className="text-xs font-medium text-muted-foreground">DNS</span>
+                  <Activity className="h-4 w-4 text-purple-600" />
+                  <span className="text-xs font-medium text-muted-foreground">Jitter</span>
                 </div>
-                <motion.div
-                  key={testProgress.measurements.filter(m => m.type === 'dns').slice(-1)[0]?.value || 0}
-                  initial={{ scale: 1.05 }}
-                  animate={{ scale: 1 }}
-                  className="text-xl font-bold text-purple-600"
-                >
-                  {testProgress.measurements.filter(m => m.type === 'dns').slice(-1)[0]?.value.toFixed(0) || '--'}
-                </motion.div>
+                <div className="text-xl font-bold text-purple-600">
+                  {testProgress.measurements.filter(m => m.type === 'latency').length > 1
+                    ? Math.round(Math.sqrt(
+                        testProgress.measurements.filter(m => m.type === 'latency')
+                          .reduce((sum, m, i, arr) => {
+                            const avg = arr.reduce((s, x) => s + x.value, 0) / arr.length
+                            return sum + Math.pow(m.value - avg, 2)
+                          }, 0) / testProgress.measurements.filter(m => m.type === 'latency').length
+                      ))
+                    : '--'}
+                </div>
                 <div className="text-xs text-muted-foreground">ms</div>
               </div>
             </div>
@@ -396,8 +396,8 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                         <span className="font-mono">{results[test.id].networkData?.downloadSpeed?.toFixed(1)} Mbps</span>
                       </div>
                       <div className="flex justify-between">
-                        <span>Upload:</span>
-                        <span className="font-mono">{results[test.id].networkData?.uploadSpeed?.toFixed(1)} Mbps</span>
+                        <span>Upload (Est.):</span>
+                        <span className="font-mono text-muted-foreground">{results[test.id].networkData?.uploadSpeed?.toFixed(1)} Mbps</span>
                       </div>
                     </>
                   )}
@@ -477,14 +477,15 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                           {results['speed-test'].networkData?.downloadSpeed?.toFixed(1) || '0'} Mbps
                         </div>
                       </div>
-                      <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg">
+                      <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border-2 border-dashed border-green-200 dark:border-green-800">
                         <div className="flex items-center space-x-2 mb-2">
                           <Upload className="h-4 w-4 text-green-600" />
-                          <span className="text-sm font-medium">Upload</span>
+                          <span className="text-sm font-medium">Upload <span className="text-xs text-muted-foreground">(Estimated)</span></span>
                         </div>
-                        <div className="text-2xl font-bold text-green-600">
+                        <div className="text-2xl font-bold text-green-600/70">
                           {results['speed-test'].networkData?.uploadSpeed?.toFixed(1) || '0'} Mbps
                         </div>
+                        <div className="text-xs text-muted-foreground mt-1">~15% of download</div>
                       </div>
                     </div>
                   </div>
