@@ -104,7 +104,7 @@ export class AIPerformancePredictor {
     return (anomalies / data.length) * 100
   }
 
-  private calculateHealthScore(data: number[], predictions: number[]): number {
+  private calculateHealthScore(data: number[]): number {
     if (data.length === 0) return 100
 
     const currentAvg = data[data.length - 1]
@@ -208,7 +208,7 @@ export class AIPerformancePredictor {
     const criticalThreshold = meanValue + stdDev * 3
 
     // Calculate health score
-    const healthScore = this.calculateHealthScore(smoothed, [hourPrediction, dayPrediction])
+    const healthScore = this.calculateHealthScore(smoothed)
 
     return {
       nextHourPrediction: {
