@@ -41,11 +41,9 @@ export default function PerformanceTimeline({ results }: PerformanceTimelineProp
     }
   }, [validResults])
 
-  if (!chartData || chartData.points.length === 0) return null
-
   // Create SVG path for smooth line
   const linePath = useMemo(() => {
-    if (chartData.points.length < 2) return ''
+    if (!chartData || chartData.points.length < 2) return ''
 
     let path = `M ${chartData.points[0].x} ${chartData.points[0].y}`
 
@@ -59,13 +57,15 @@ export default function PerformanceTimeline({ results }: PerformanceTimelineProp
     }
 
     return path
-  }, [chartData.points])
+  }, [chartData])
 
   // Create area fill path
   const areaPath = useMemo(() => {
     if (!linePath) return ''
     return `${linePath} L 100 100 L 0 100 Z`
   }, [linePath])
+
+  if (!chartData || chartData.points.length === 0) return null
 
   return (
     <AnimatedCard delay={0.4} className="overflow-hidden">
