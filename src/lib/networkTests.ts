@@ -40,10 +40,12 @@ const TEST_ENDPOINTS = [
   'https://httpbin.org/ip'
 ]
 
+// Use larger files from reliable CDN sources for accurate speed testing
 const SPEED_TEST_FILES = [
-  'https://httpbin.org/bytes/100000',   // 100KB
-  'https://httpbin.org/bytes/500000',   // 500KB  
-  'https://httpbin.org/bytes/1048576',  // 1MB
+  { url: 'https://speed.cloudflare.com/__down?bytes=10000000', size: 10000000, name: '10MB' },    // 10MB
+  { url: 'https://speed.cloudflare.com/__down?bytes=25000000', size: 25000000, name: '25MB' },    // 25MB
+  { url: 'https://speed.cloudflare.com/__down?bytes=50000000', size: 50000000, name: '50MB' },    // 50MB
+  { url: 'https://speed.cloudflare.com/__down?bytes=100000000', size: 100000000, name: '100MB' }, // 100MB
 ]
 
 // Get the best available endpoint based on connectivity
@@ -132,57 +134,102 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   )
   
   updateProgress('speed', 40, 'Testing download speeds...')
-  
-  // Extended speed testing with multiple files (45 seconds)
+
+  // Progressive speed testing with increasing file sizes
   const speedTests: number[] = []
+  let progressOffset = 40
+
   for (let fileIndex = 0; fileIndex < SPEED_TEST_FILES.length; fileIndex++) {
-    for (let attempt = 0; attempt < 3; attempt++) {
+    const testFile = SPEED_TEST_FILES[fileIndex]
+    let fileSuccessful = false
+
+    // Try each file size up to 2 times
+    for (let attempt = 0; attempt < 2 && !fileSuccessful; attempt++) {
       try {
-        const testFile = SPEED_TEST_FILES[fileIndex]
+        updateProgress('speed', progressOffset, `Testing with ${testFile.name} file...`, currentScore)
+
         const start = performance.now()
-        
-        const response = await fetch(testFile, { 
+        const response = await fetch(testFile.url, {
           cache: 'no-cache',
-          signal: AbortSignal.timeout(15000)
+          signal: AbortSignal.timeout(30000) // 30 second timeout for larger files
         })
-        
-        if (response.ok) {
-          const data = await response.arrayBuffer()
-          const duration = (performance.now() - start) / 1000
-          const sizeBytes = data.byteLength
-          const sizeMB = sizeBytes / (1024 * 1024)
-          const downloadSpeed = (sizeMB * 8) / duration
-          
-          speedTests.push(downloadSpeed)
-          
-          // Add measurement
-          const speedScore = Math.min(100, downloadSpeed * 2)
-          measurements.push({
-            timestamp: Date.now(),
-            type: 'speed',
-            value: downloadSpeed,
-            score: speedScore,
-            phase: 'Speed Test'
-          })
-          
-          currentScore = (currentScore + speedScore) / 2
-          updateProgress('speed', 40 + (fileIndex * 3 + attempt + 1) * 2, 
-            `Speed test: ${downloadSpeed.toFixed(1)} Mbps`, currentScore)
+
+        if (response.ok && response.body) {
+          // Stream the response to accurately measure download speed
+          const reader = response.body.getReader()
+          let receivedBytes = 0
+
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            receivedBytes += value.length
+          }
+
+          const duration = (performance.now() - start) / 1000 // in seconds
+          const sizeMB = receivedBytes / (1024 * 1024)
+          const downloadSpeed = (sizeMB * 8) / duration // Convert to Mbps
+
+          // Only accept realistic speeds (prevent outliers)
+          if (downloadSpeed > 0.1 && downloadSpeed < 10000 && duration > 0.5) {
+            speedTests.push(downloadSpeed)
+            fileSuccessful = true
+
+            // Add measurement
+            const speedScore = Math.min(100, (downloadSpeed / 200) * 100) // Scale to 200 Mbps max
+            measurements.push({
+              timestamp: Date.now(),
+              type: 'speed',
+              value: downloadSpeed,
+              score: speedScore,
+              phase: 'Speed Test'
+            })
+
+            currentScore = speedScore
+            updateProgress('speed', progressOffset + 3,
+              `Download: ${downloadSpeed.toFixed(2)} Mbps (${testFile.name})`, currentScore)
+
+            // If we got a good result from smaller file, skip to larger files
+            if (downloadSpeed > 50 && fileIndex < 2) {
+              fileIndex++
+            }
+          }
         }
-      } catch {
-        speedTests.push(Math.max(0.1, 50 - avgLatency / 10))
+      } catch (error) {
+        console.warn(`Speed test attempt ${attempt + 1} failed for ${testFile.name}:`, error)
       }
-      
-      await new Promise(resolve => setTimeout(resolve, 2000))
+    }
+
+    progressOffset += 5
+
+    // If we have enough samples or got consistent results, we can stop early
+    if (speedTests.length >= 3) {
+      const recentSpeeds = speedTests.slice(-3)
+      const avgRecent = recentSpeeds.reduce((a, b) => a + b, 0) / recentSpeeds.length
+      const variance = recentSpeeds.reduce((sum, speed) => sum + Math.pow(speed - avgRecent, 2), 0) / recentSpeeds.length
+
+      // If variance is low (consistent results), we can stop
+      if (variance < avgRecent * 0.1) break
+    }
+  }
+
+  // Calculate average, removing outliers
+  let avgDownloadSpeed = 1 // Default fallback
+
+  if (speedTests.length > 0) {
+    // Remove top and bottom 20% if we have enough samples
+    if (speedTests.length >= 5) {
+      const sorted = [...speedTests].sort((a, b) => a - b)
+      const trimCount = Math.floor(sorted.length * 0.2)
+      const trimmed = sorted.slice(trimCount, sorted.length - trimCount)
+      avgDownloadSpeed = trimmed.reduce((a, b) => a + b, 0) / trimmed.length
+    } else {
+      avgDownloadSpeed = speedTests.reduce((a, b) => a + b, 0) / speedTests.length
     }
   }
   
-  const avgDownloadSpeed = speedTests.length > 0 
-    ? speedTests.reduce((a, b) => a + b, 0) / speedTests.length 
-    : Math.max(0.1, 50 - avgLatency / 10)
-  
-  // Estimate upload speed
-  const uploadSpeed = avgDownloadSpeed * 0.15
+  // Estimate upload speed more realistically
+  // Most connections have 1:10 to 1:20 upload/download ratio
+  const uploadSpeed = avgDownloadSpeed * 0.1 // Conservative 10% of download
   
   updateProgress('dns', 65, 'Testing DNS resolution...')
   
@@ -282,7 +329,7 @@ export async function runBufferBloatTest(): Promise<{ bufferBloat: number; baseL
   // Create network load with concurrent requests
   for (let i = 0; i < 3; i++) {
     loadPromises.push(
-      fetch(SPEED_TEST_FILES[0], { 
+      fetch(SPEED_TEST_FILES[0].url, {
         cache: 'no-cache',
         signal: AbortSignal.timeout(8000)
       }).catch(() => null)
@@ -380,31 +427,36 @@ export async function runNetworkQualityTest(): Promise<NetworkTestResult> {
 
 function calculateQualityScore(download: number, upload: number, latency: number, jitter: number): number {
   let score = 100
-  
-  // Download speed scoring (0-40 points deducted)
+
+  // Download speed scoring (0-40 points deducted) - Updated for modern speeds
   if (download < 1) score -= 40
-  else if (download < 5) score -= 30
-  else if (download < 10) score -= 20
-  else if (download < 25) score -= 10
-  else if (download < 50) score -= 5
-  
-  // Upload speed scoring (0-20 points deducted)
+  else if (download < 10) score -= 30
+  else if (download < 25) score -= 20
+  else if (download < 50) score -= 15
+  else if (download < 100) score -= 10
+  else if (download < 200) score -= 5
+  // 200+ Mbps gets full points
+
+  // Upload speed scoring (0-20 points deducted) - Updated for modern speeds
   if (upload < 0.5) score -= 20
-  else if (upload < 2) score -= 15
-  else if (upload < 5) score -= 10
-  else if (upload < 10) score -= 5
-  
+  else if (upload < 3) score -= 15
+  else if (upload < 10) score -= 10
+  else if (upload < 20) score -= 5
+  // 20+ Mbps gets full points
+
   // Latency scoring (0-30 points deducted)
   if (latency > 500) score -= 30
   else if (latency > 200) score -= 25
   else if (latency > 100) score -= 15
   else if (latency > 50) score -= 8
-  
+  else if (latency > 30) score -= 3
+
   // Jitter scoring (0-10 points deducted)
   if (jitter > 50) score -= 10
+  else if (jitter > 30) score -= 7
   else if (jitter > 20) score -= 5
   else if (jitter > 10) score -= 2
-  
+
   return Math.max(0, Math.min(100, score))
 }
 
@@ -425,12 +477,13 @@ function calculateOverallQuality(
     dns: 0.05
   }
   
-  const downloadScore = Math.min(100, download * 2) // Scale download speed to 0-100
-  const uploadScore = Math.min(100, upload * 10)    // Scale upload speed to 0-100
-  const latencyScore = Math.max(0, 100 - latency / 5)  // Lower latency = higher score
-  const jitterScore = Math.max(0, 100 - jitter * 2)    // Lower jitter = higher score
+  // Updated scaling for modern internet speeds
+  const downloadScore = Math.min(100, (download / 200) * 100) // Scale to 200 Mbps = 100 points
+  const uploadScore = Math.min(100, (upload / 20) * 100)      // Scale to 20 Mbps = 100 points
+  const latencyScore = Math.max(0, 100 - latency / 5)         // Lower latency = higher score
+  const jitterScore = Math.max(0, 100 - jitter * 2)           // Lower jitter = higher score
   const bufferBloatScore = Math.max(0, 100 - bufferBloat / 2) // Lower buffer bloat = higher score
-  const dnsScore = Math.max(0, 100 - dns / 2)         // Faster DNS = higher score
+  const dnsScore = Math.max(0, 100 - dns / 2)                 // Faster DNS = higher score
   
   const weightedScore = 
     (downloadScore * weights.download) +
@@ -444,8 +497,11 @@ function calculateOverallQuality(
 }
 
 function getConnectionType(downloadSpeed: number): string {
-  if (downloadSpeed >= 100) return 'Fiber/High-speed'
-  if (downloadSpeed >= 50) return 'Broadband'
+  if (downloadSpeed >= 500) return 'Gigabit Fiber'
+  if (downloadSpeed >= 200) return 'High-Speed Fiber'
+  if (downloadSpeed >= 100) return 'Fiber/Fast Broadband'
+  if (downloadSpeed >= 50) return 'Standard Broadband'
+  if (downloadSpeed >= 25) return 'Basic Broadband'
   if (downloadSpeed >= 10) return 'DSL/Cable'
   if (downloadSpeed >= 1) return 'Mobile/Slow'
   return 'Very Slow'
