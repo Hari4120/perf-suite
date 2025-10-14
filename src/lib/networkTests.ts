@@ -227,9 +227,71 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
     }
   }
   
-  // Estimate upload speed more realistically
-  // Most connections have 1:10 to 1:20 upload/download ratio
-  const uploadSpeed = avgDownloadSpeed * 0.1 // Conservative 10% of download
+  updateProgress('speed', 60, 'Testing upload speeds...')
+
+  // Real upload speed testing
+  const uploadTests: number[] = []
+  const uploadSizes = [
+    { bytes: 1048576, name: '1MB' },    // 1MB
+    { bytes: 5242880, name: '5MB' },    // 5MB
+    { bytes: 10485760, name: '10MB' }   // 10MB
+  ]
+
+  for (let sizeIndex = 0; sizeIndex < uploadSizes.length && uploadTests.length < 3; sizeIndex++) {
+    const uploadSize = uploadSizes[sizeIndex]
+
+    try {
+      updateProgress('speed', 60 + sizeIndex * 3, `Upload test with ${uploadSize.name} file...`, currentScore)
+
+      // Generate random data to upload
+      const uploadData = new Uint8Array(uploadSize.bytes)
+      crypto.getRandomValues(uploadData)
+
+      const start = performance.now()
+
+      // Upload to httpbin.org/post which accepts POST data
+      const response = await fetch('https://httpbin.org/post', {
+        method: 'POST',
+        body: uploadData,
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(30000),
+        headers: {
+          'Content-Type': 'application/octet-stream'
+        }
+      })
+
+      if (response.ok) {
+        const duration = (performance.now() - start) / 1000 // in seconds
+        const sizeMB = uploadSize.bytes / (1024 * 1024)
+        const uploadSpeed = (sizeMB * 8) / duration // Convert to Mbps
+
+        // Only accept realistic upload speeds
+        if (uploadSpeed > 0.1 && uploadSpeed < 1000 && duration > 0.5) {
+          uploadTests.push(uploadSpeed)
+
+          const uploadScore = Math.min(100, (uploadSpeed / 20) * 100) // Scale to 20 Mbps max
+          measurements.push({
+            timestamp: Date.now(),
+            type: 'speed',
+            value: uploadSpeed,
+            score: uploadScore,
+            phase: 'Upload Test'
+          })
+
+          currentScore = (currentScore + uploadScore) / 2
+          updateProgress('speed', 60 + sizeIndex * 3 + 2,
+            `Upload: ${uploadSpeed.toFixed(2)} Mbps (${uploadSize.name})`, currentScore)
+        }
+      }
+    } catch (error) {
+      console.warn(`Upload test failed for ${uploadSize.name}:`, error)
+    }
+  }
+
+  // Calculate average upload speed, or estimate if tests failed
+  const uploadSpeed = uploadTests.length > 0
+    ? uploadTests.reduce((a, b) => a + b, 0) / uploadTests.length
+    : avgDownloadSpeed * 0.1 // Fallback to estimation
   
   updateProgress('dns', 65, 'Testing DNS resolution...')
   

@@ -198,113 +198,147 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
       </AnimatedCardHeader>
       
       <AnimatedCardContent className="space-y-6">
-        {/* Live Progress Display */}
-        <AnimatePresence>
-          {testProgress && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg border"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <motion.div
-                    animate={{ rotate: testProgress.phase !== 'complete' ? [0, 360] : 0 }}
-                    transition={{ duration: 2, repeat: testProgress.phase !== 'complete' ? Infinity : 0 }}
+        {/* Live Progress Display with Static Titles */}
+        {testProgress && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            className="mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 rounded-lg border"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <motion.div
+                  animate={{ rotate: testProgress.phase !== 'complete' ? [0, 360] : 0 }}
+                  transition={{ duration: 2, repeat: testProgress.phase !== 'complete' ? Infinity : 0, ease: "linear" }}
+                >
+                  <Activity className="h-6 w-6 text-blue-600" />
+                </motion.div>
+                <div>
+                  <h3 className="font-semibold text-lg">
+                    {testProgress.phase === 'complete' ? '✓ Test Complete!' : '⚡ Testing in Progress'}
+                  </h3>
+                  <motion.p
+                    key={testProgress.currentTest}
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-sm text-muted-foreground"
                   >
-                    <Activity className="h-6 w-6 text-blue-600" />
-                  </motion.div>
-                  <div>
-                    <h3 className="font-semibold text-lg">
-                      {testProgress.phase === 'complete' ? 'Test Complete!' : 'Testing in Progress'}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">{testProgress.currentTest}</p>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {testProgress.liveScore}/100
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    Live Score
-                  </div>
+                    {testProgress.currentTest}
+                  </motion.p>
                 </div>
               </div>
-              
-              {/* Progress Bar */}
-              <div className="mb-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span>Progress</span>
-                  <span>{Math.round(testProgress.progress)}%</span>
-                </div>
-                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                  <motion.div
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${testProgress.progress}%` }}
-                    transition={{ duration: 0.3 }}
-                  />
-                </div>
+              <div className="text-right">
+                <motion.div
+                  key={testProgress.liveScore}
+                  initial={{ scale: 1.1 }}
+                  animate={{ scale: 1 }}
+                  className="text-3xl font-bold text-blue-600"
+                >
+                  {Math.round(testProgress.liveScore)}
+                </motion.div>
+                <div className="text-xs text-muted-foreground">Live Score</div>
               </div>
-              
-              {/* Time and Phase Info */}
-              <div className="grid grid-cols-3 gap-4 text-sm">
-                <div>
-                  <div className="font-medium">Elapsed</div>
-                  <div className="text-muted-foreground">
-                    {Math.round(testProgress.elapsed)}s
-                  </div>
-                </div>
-                <div>
-                  <div className="font-medium">Estimated</div>
-                  <div className="text-muted-foreground">
-                    {Math.round(testProgress.estimated)}s
-                  </div>
-                </div>
-                <div>
-                  <div className="font-medium">Phase</div>
-                  <div className="text-muted-foreground capitalize">
-                    {testProgress.phase.replace('-', ' ')}
-                  </div>
-                </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-6">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="font-medium">Progress</span>
+                <motion.span
+                  key={testProgress.progress}
+                  initial={{ opacity: 0.5 }}
+                  animate={{ opacity: 1 }}
+                >
+                  {Math.round(testProgress.progress)}%
+                </motion.span>
               </div>
-              
-              {/* Recent Measurements */}
-              {testProgress.measurements.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="font-medium mb-2">Recent Measurements</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                    {testProgress.measurements.slice(-4).map((measurement, index) => (
-                      <motion.div
-                        key={measurement.timestamp}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="p-2 bg-white dark:bg-gray-800 rounded border text-xs"
-                      >
-                        <div className="font-medium">{measurement.phase}</div>
-                        <div className="text-muted-foreground">
-                          {measurement.type === 'speed' ? `${measurement.value.toFixed(1)} Mbps` :
-                           measurement.type === 'latency' ? `${Math.round(measurement.value)}ms` :
-                           measurement.type === 'dns' ? `${Math.round(measurement.value)}ms` :
-                           `${Math.round(measurement.value)}`}
-                        </div>
-                        <div className={cn(
-                          "font-bold",
-                          measurement.score >= 80 ? "text-green-600" :
-                          measurement.score >= 60 ? "text-yellow-600" : "text-red-600"
-                        )}>
-                          {Math.round(measurement.score)}/100
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
+              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                <motion.div
+                  className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full"
+                  animate={{ width: `${testProgress.progress}%` }}
+                  transition={{ duration: 0.3, ease: "easeOut" }}
+                />
+              </div>
+            </div>
+
+            {/* Static Titles with Dynamic Values */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {/* Download Speed */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
+                <div className="flex items-center space-x-2 mb-1">
+                  <Download className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs font-medium text-muted-foreground">Download</span>
                 </div>
-              )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+                <motion.div
+                  key={testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Speed Test').slice(-1)[0]?.value || 0}
+                  initial={{ scale: 1.05 }}
+                  animate={{ scale: 1 }}
+                  className="text-xl font-bold text-blue-600"
+                >
+                  {testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Speed Test').slice(-1)[0]?.value.toFixed(1) || '--'}
+                </motion.div>
+                <div className="text-xs text-muted-foreground">Mbps</div>
+              </div>
+
+              {/* Upload Speed */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
+                <div className="flex items-center space-x-2 mb-1">
+                  <Upload className="h-4 w-4 text-green-600" />
+                  <span className="text-xs font-medium text-muted-foreground">Upload</span>
+                </div>
+                <motion.div
+                  key={testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Upload Test').slice(-1)[0]?.value || 0}
+                  initial={{ scale: 1.05 }}
+                  animate={{ scale: 1 }}
+                  className="text-xl font-bold text-green-600"
+                >
+                  {testProgress.measurements.filter(m => m.type === 'speed' && m.phase === 'Upload Test').slice(-1)[0]?.value.toFixed(1) || '--'}
+                </motion.div>
+                <div className="text-xs text-muted-foreground">Mbps</div>
+              </div>
+
+              {/* Latency */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
+                <div className="flex items-center space-x-2 mb-1">
+                  <Clock className="h-4 w-4 text-yellow-600" />
+                  <span className="text-xs font-medium text-muted-foreground">Latency</span>
+                </div>
+                <motion.div
+                  key={testProgress.measurements.filter(m => m.type === 'latency').slice(-1)[0]?.value || 0}
+                  initial={{ scale: 1.05 }}
+                  animate={{ scale: 1 }}
+                  className="text-xl font-bold text-yellow-600"
+                >
+                  {testProgress.measurements.filter(m => m.type === 'latency').slice(-1)[0]?.value.toFixed(0) || '--'}
+                </motion.div>
+                <div className="text-xs text-muted-foreground">ms</div>
+              </div>
+
+              {/* DNS */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 border">
+                <div className="flex items-center space-x-2 mb-1">
+                  <Server className="h-4 w-4 text-purple-600" />
+                  <span className="text-xs font-medium text-muted-foreground">DNS</span>
+                </div>
+                <motion.div
+                  key={testProgress.measurements.filter(m => m.type === 'dns').slice(-1)[0]?.value || 0}
+                  initial={{ scale: 1.05 }}
+                  animate={{ scale: 1 }}
+                  className="text-xl font-bold text-purple-600"
+                >
+                  {testProgress.measurements.filter(m => m.type === 'dns').slice(-1)[0]?.value.toFixed(0) || '--'}
+                </motion.div>
+                <div className="text-xs text-muted-foreground">ms</div>
+              </div>
+            </div>
+
+            {/* Time Info */}
+            <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+              <span>Elapsed: <strong>{Math.round(testProgress.elapsed)}s</strong></span>
+              <span className="capitalize">{testProgress.phase.replace('-', ' ')}</span>
+              <span>Est. Total: <strong>{Math.round(testProgress.estimated)}s</strong></span>
+            </div>
+          </motion.div>
+        )}
         
         {/* Test Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
