@@ -18,7 +18,7 @@ import Footer from "@/components/Footer"
 import PerformanceInsights from "@/components/PerformanceInsights"
 import { useNotify } from "@/components/NotificationSystem"
 import { Tooltip } from "@/components/ui/Tooltip"
-import Performance3D from "@/components/Performance3D"
+import PerformanceTimeline from "@/components/PerformanceTimeline"
 import AnomalyDetector from "@/components/AnomalyDetector"
 import AIRecommendations from "@/components/AIRecommendations"
 import IntelligentComparator from "@/components/IntelligentComparator"
@@ -495,18 +495,18 @@ export default function Dashboard() {
               ].map((stat) => (
                 <motion.div
                   key={stat.label}
-                  initial={{ opacity: 0, y: 20, scale: 0.8 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -20, scale: 0.8 }}
-                  transition={{ 
-                    duration: 0.15, 
-                    delay: stat.delay * 0.02,
-                    ease: "easeOut"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{
+                    duration: 0.2,
+                    delay: stat.delay * 0.03,
+                    ease: [0.25, 0.1, 0.25, 1]
                   }}
-                  whileHover={{ 
-                    scale: 1.02, 
-                    y: -2,
-                    transition: { duration: 0.1 }
+                  whileHover={{
+                    scale: 1.01,
+                    y: -1,
+                    transition: { duration: 0.15, ease: "easeOut" }
                   }}
                   className={cn(
                     "relative overflow-hidden rounded-lg border p-4 transition-all duration-150 group",
@@ -572,10 +572,10 @@ export default function Dashboard() {
           )}
         </AnimatePresence>
         
-        {/* 3D Performance Visualization */}
+        {/* Performance Timeline */}
         <AnimatePresence>
           {results.length >= 3 && (
-            <Performance3D results={results} />
+            <PerformanceTimeline results={results} />
           )}
         </AnimatePresence>
 
@@ -741,17 +741,17 @@ export default function Dashboard() {
                       ].map((item) => (
                         <motion.div
                           key={item.title}
-                          initial={{ opacity: 0, y: 30, rotateX: -15 }}
-                          animate={{ opacity: 1, y: 0, rotateX: 0 }}
-                          transition={{ 
-                            duration: 0.2, 
-                            delay: item.delay * 0.5,
-                            ease: "easeOut"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{
+                            duration: 0.3,
+                            delay: item.delay,
+                            ease: [0.25, 0.1, 0.25, 1]
                           }}
-                          whileHover={{ 
-                            scale: 1.02, 
-                            y: -2,
-                            transition: { duration: 0.1 }
+                          whileHover={{
+                            scale: 1.01,
+                            y: -1,
+                            transition: { duration: 0.15, ease: "easeOut" }
                           }}
                           className={cn(
                             "relative p-6 border rounded-lg cursor-pointer transition-all duration-300 group overflow-hidden",
