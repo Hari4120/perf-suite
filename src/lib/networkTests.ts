@@ -31,13 +31,13 @@ export interface TestProgress {
   measurements: TestMeasurement[]
 }
 
-// Reliable test endpoints that support CORS
+// Reliable low-latency test endpoints optimized for speed
 const TEST_ENDPOINTS = [
-  'https://httpbin.org/get',
-  'https://httpbin.org/json',
-  'https://api.github.com/zen',
-  'https://httpbin.org/uuid',
-  'https://httpbin.org/ip'
+  'https://www.cloudflare.com/cdn-cgi/trace',      // Cloudflare edge - globally distributed
+  'https://1.1.1.1/cdn-cgi/trace',                 // Cloudflare DNS - very fast
+  'https://www.google.com/generate_204',            // Google no-content endpoint - optimized for speed
+  'https://httpbin.org/get',                        // Fallback general purpose
+  'https://api.github.com/zen'                      // Fallback API
 ]
 
 // Use larger files from reliable CDN sources for accurate speed testing
@@ -93,20 +93,32 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   const bestEndpoint = await getBestEndpoint()
   
   updateProgress('latency', 10, 'Testing connection latency...')
-  
-  // Extended latency testing with live updates (30 seconds)
+
+  // Optimized latency testing with low-latency endpoints
   const latencyTests: number[] = []
-  for (let i = 0; i < 15; i++) {
+  const latencyTestCount = 12 // Reduced from 15
+
+  // Use optimized endpoints for latency measurement
+  const latencyEndpoints = [
+    'https://www.cloudflare.com/cdn-cgi/trace',  // Cloudflare edge
+    'https://1.1.1.1/cdn-cgi/trace',              // Cloudflare DNS
+    'https://www.google.com/generate_204'          // Google no-content
+  ]
+
+  for (let i = 0; i < latencyTestCount; i++) {
     try {
+      // Rotate through optimized endpoints
+      const endpoint = latencyEndpoints[i % latencyEndpoints.length]
+
       const start = performance.now()
-      await fetch(bestEndpoint, { 
-        method: 'HEAD', 
+      await fetch(endpoint, {
+        method: 'HEAD',
         cache: 'no-cache',
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(3000) // Reduced timeout
       })
       const latency = performance.now() - start
       latencyTests.push(latency)
-      
+
       // Add measurement
       const latencyScore = Math.max(0, 100 - latency / 5)
       measurements.push({
@@ -116,16 +128,16 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
         score: latencyScore,
         phase: 'Latency Test'
       })
-      
+
       currentScore = latencyScore
-      updateProgress('latency', 10 + (i + 1) * 2, `Latency test ${i + 1}/15: ${Math.round(latency)}ms`, currentScore)
-      
+      updateProgress('latency', 10 + (i + 1) * 2, `Latency test ${i + 1}/${latencyTestCount}: ${Math.round(latency)}ms`, currentScore)
+
     } catch {
       latencyTests.push(1000)
     }
-    
-    // Small delay between tests
-    if (i < 14) await new Promise(resolve => setTimeout(resolve, 1500))
+
+    // Reduced delay between tests for faster completion
+    if (i < latencyTestCount - 1) await new Promise(resolve => setTimeout(resolve, 400))
   }
   
   const avgLatency = latencyTests.reduce((a, b) => a + b, 0) / latencyTests.length
@@ -229,69 +241,106 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('speed', 60, 'Testing upload speeds...')
 
-  // Real upload speed testing
+  // Real upload speed testing with proper timing measurement
   const uploadTests: number[] = []
   const uploadSizes = [
-    { bytes: 1048576, name: '1MB' },    // 1MB
+    { bytes: 2097152, name: '2MB' },    // 2MB
     { bytes: 5242880, name: '5MB' },    // 5MB
-    { bytes: 10485760, name: '10MB' }   // 10MB
+    { bytes: 10485760, name: '10MB' },  // 10MB
+    { bytes: 20971520, name: '20MB' }   // 20MB - for high-speed connections
   ]
 
-  for (let sizeIndex = 0; sizeIndex < uploadSizes.length && uploadTests.length < 3; sizeIndex++) {
+  // Choose appropriate upload size based on download speed
+  let startIndex = 0
+  if (avgDownloadSpeed > 100) startIndex = 1 // Start with 5MB for fast connections
+  if (avgDownloadSpeed > 200) startIndex = 2 // Start with 10MB for very fast connections
+
+  for (let sizeIndex = startIndex; sizeIndex < uploadSizes.length && uploadTests.length < 3; sizeIndex++) {
     const uploadSize = uploadSizes[sizeIndex]
 
-    try {
-      updateProgress('speed', 60 + sizeIndex * 3, `Upload test with ${uploadSize.name} file...`, currentScore)
+    // Try multiple endpoints for better reliability
+    const uploadEndpoints = [
+      'https://httpbin.org/post',
+      'https://httpbin.org/anything',
+    ]
 
-      // Generate random data to upload
-      const uploadData = new Uint8Array(uploadSize.bytes)
-      crypto.getRandomValues(uploadData)
+    for (let endpointIndex = 0; endpointIndex < uploadEndpoints.length && uploadTests.length < 3; endpointIndex++) {
+      try {
+        updateProgress('speed', 60 + uploadTests.length * 3, `Upload test with ${uploadSize.name} file...`, currentScore)
 
-      const start = performance.now()
+        // Generate compressible data for more accurate upload measurement
+        const uploadData = new Uint8Array(uploadSize.bytes)
+        crypto.getRandomValues(uploadData)
 
-      // Upload to httpbin.org/post which accepts POST data
-      const response = await fetch('https://httpbin.org/post', {
-        method: 'POST',
-        body: uploadData,
-        cache: 'no-cache',
-        signal: AbortSignal.timeout(30000),
-        headers: {
-          'Content-Type': 'application/octet-stream'
+        // Measure time to send data (not including server processing)
+        const start = performance.now()
+
+        const response = await fetch(uploadEndpoints[endpointIndex], {
+          method: 'POST',
+          body: uploadData,
+          cache: 'no-cache',
+          signal: AbortSignal.timeout(45000), // Longer timeout for larger uploads
+          headers: {
+            'Content-Type': 'application/octet-stream',
+            'Content-Length': uploadSize.bytes.toString()
+          }
+        })
+
+        // Measure before reading response to get pure upload time
+        const uploadEndTime = performance.now()
+
+        if (response.ok) {
+          // Consume response body
+          await response.text()
+
+          const duration = (uploadEndTime - start) / 1000 // in seconds
+          const sizeMB = uploadSize.bytes / (1024 * 1024)
+          const uploadSpeed = (sizeMB * 8) / duration // Convert to Mbps
+
+          // Only accept realistic upload speeds with longer test duration
+          if (uploadSpeed > 0.1 && uploadSpeed < 2000 && duration > 0.8) {
+            uploadTests.push(uploadSpeed)
+
+            const uploadScore = Math.min(100, (uploadSpeed / 50) * 100) // Scale to 50 Mbps
+            measurements.push({
+              timestamp: Date.now(),
+              type: 'speed',
+              value: uploadSpeed,
+              score: uploadScore,
+              phase: 'Upload Test'
+            })
+
+            currentScore = (currentScore + uploadScore) / 2
+            updateProgress('speed', 60 + uploadTests.length * 3,
+              `Upload: ${uploadSpeed.toFixed(2)} Mbps (${uploadSize.name})`, currentScore)
+
+            // If we got good results, try larger file next time
+            if (uploadSpeed > 20 && sizeIndex < uploadSizes.length - 1) {
+              sizeIndex++
+            }
+            break // Success, move to next size
+          }
         }
-      })
-
-      if (response.ok) {
-        const duration = (performance.now() - start) / 1000 // in seconds
-        const sizeMB = uploadSize.bytes / (1024 * 1024)
-        const uploadSpeed = (sizeMB * 8) / duration // Convert to Mbps
-
-        // Only accept realistic upload speeds
-        if (uploadSpeed > 0.1 && uploadSpeed < 1000 && duration > 0.5) {
-          uploadTests.push(uploadSpeed)
-
-          const uploadScore = Math.min(100, (uploadSpeed / 20) * 100) // Scale to 20 Mbps max
-          measurements.push({
-            timestamp: Date.now(),
-            type: 'speed',
-            value: uploadSpeed,
-            score: uploadScore,
-            phase: 'Upload Test'
-          })
-
-          currentScore = (currentScore + uploadScore) / 2
-          updateProgress('speed', 60 + sizeIndex * 3 + 2,
-            `Upload: ${uploadSpeed.toFixed(2)} Mbps (${uploadSize.name})`, currentScore)
-        }
+      } catch (error) {
+        console.warn(`Upload test failed for ${uploadSize.name} at endpoint ${endpointIndex}:`, error)
+        // Try next endpoint
       }
-    } catch (error) {
-      console.warn(`Upload test failed for ${uploadSize.name}:`, error)
     }
   }
 
-  // Calculate average upload speed, or estimate if tests failed
-  const uploadSpeed = uploadTests.length > 0
-    ? uploadTests.reduce((a, b) => a + b, 0) / uploadTests.length
-    : avgDownloadSpeed * 0.1 // Fallback to estimation
+  // Calculate average upload speed with outlier removal
+  let uploadSpeed = avgDownloadSpeed * 0.1 // Default fallback
+
+  if (uploadTests.length > 0) {
+    if (uploadTests.length >= 3) {
+      // Remove outliers if we have enough samples
+      const sorted = [...uploadTests].sort((a, b) => a - b)
+      const trimmed = sorted.slice(1, -1) // Remove highest and lowest
+      uploadSpeed = trimmed.reduce((a, b) => a + b, 0) / trimmed.length
+    } else {
+      uploadSpeed = uploadTests.reduce((a, b) => a + b, 0) / uploadTests.length
+    }
+  }
   
   updateProgress('dns', 65, 'Testing DNS resolution...')
   
