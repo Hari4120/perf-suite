@@ -45,7 +45,7 @@ export function Tooltip({
       height: window.innerHeight
     }
 
-    let finalPosition = position
+    let finalPosition: 'top' | 'bottom' | 'left' | 'right' = 'top'
     let x = 0
     let y = 0
 
@@ -60,6 +60,8 @@ export function Tooltip({
       else if (spaceTop >= 50) finalPosition = 'top'
       else if (spaceRight >= 200) finalPosition = 'right'
       else finalPosition = 'left'
+    } else {
+      finalPosition = position
     }
 
     // Calculate coordinates based on final position
