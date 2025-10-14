@@ -95,7 +95,7 @@ export default function ExportSystem({ results, disabled = false }: ExportSystem
         url: result.url,
         benchmarkType: result.benchmarkType,
         timestamp: new Date(result.timestamp).toISOString(),
-        duration: result.duration,
+        duration: result.metadata.duration,
         stats: result.stats,
         metadata: result.metadata,
         ...(includeCharts && { results: result.results })
@@ -126,7 +126,7 @@ export default function ExportSystem({ results, disabled = false }: ExportSystem
       new Date(result.timestamp).toISOString(),
       result.url,
       result.benchmarkType,
-      result.duration.toFixed(2),
+      (result.metadata.duration || 0).toFixed(2),
       result.stats?.avg.toFixed(2) || 'N/A',
       result.stats?.min.toFixed(2) || 'N/A',
       result.stats?.max.toFixed(2) || 'N/A',
@@ -162,7 +162,7 @@ Generated on: ${now}
 ${results.map(result => `### ${result.url} (${result.benchmarkType})
 
 - **Timestamp**: ${new Date(result.timestamp).toLocaleString()}
-- **Duration**: ${result.duration.toFixed(2)}s
+- **Duration**: ${(result.metadata.duration || 0).toFixed(2)}s
 - **Total Requests**: ${result.results.length}
 
 #### Performance Metrics
@@ -259,7 +259,7 @@ ${results.map(result => `### ${result.url} (${result.benchmarkType})
                     <tr>
                         <td><strong>${result.url}</strong><br><small>${new Date(result.timestamp).toLocaleString()}</small></td>
                         <td><span class="badge">${result.benchmarkType}</span></td>
-                        <td>${result.duration.toFixed(2)}s</td>
+                        <td>${(result.metadata.duration || 0).toFixed(2)}s</td>
                         <td><strong>${result.stats?.avg.toFixed(2) || 'N/A'}ms</strong></td>
                         <td>${result.stats?.min.toFixed(2) || 'N/A'} / ${result.stats?.max.toFixed(2) || 'N/A'}ms</td>
                         <td class="${result.stats ? (result.stats.failed === 0 ? 'success' : 'warning') : 'error'}">
