@@ -26,7 +26,7 @@ export function Tooltip({
   const [actualPosition, setActualPosition] = useState<'top' | 'bottom' | 'left' | 'right'>('top')
   const triggerRef = useRef<HTMLDivElement>(null)
   const tooltipRef = useRef<HTMLDivElement>(null)
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     return () => {
@@ -40,7 +40,6 @@ export function Tooltip({
     if (!triggerRef.current) return
 
     const triggerRect = triggerRef.current.getBoundingClientRect()
-    const tooltipRect = tooltipRef.current?.getBoundingClientRect()
     const viewport = {
       width: window.innerWidth,
       height: window.innerHeight
@@ -54,7 +53,6 @@ export function Tooltip({
     if (position === 'auto') {
       const spaceTop = triggerRect.top
       const spaceBottom = viewport.height - triggerRect.bottom
-      const spaceLeft = triggerRect.left
       const spaceRight = viewport.width - triggerRect.right
 
       // Choose position with most space

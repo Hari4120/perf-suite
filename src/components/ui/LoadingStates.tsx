@@ -145,7 +145,7 @@ interface ProcessingIndicatorProps {
   className?: string
 }
 
-export function ProcessingIndicator({ steps, currentStep, className }: ProcessingIndicatorProps) {
+export function ProcessingIndicator({ steps, className }: ProcessingIndicatorProps) {
   return (
     <div className={cn("space-y-3", className)}>
       {steps.map((step, index) => (

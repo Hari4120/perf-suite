@@ -1,10 +1,9 @@
 "use client"
 
 import { useState, useMemo, useRef, useEffect } from "react"
-import { motion, useMotionValue, useTransform, animate } from "framer-motion"
-import { Activity, Zap, TrendingUp, TrendingDown, Sparkles } from "lucide-react"
+import { motion, useMotionValue, animate } from "framer-motion"
+import { TrendingUp, TrendingDown, Sparkles } from "lucide-react"
 import { AnimatedCard, AnimatedCardHeader, AnimatedCardTitle, AnimatedCardContent } from "@/components/ui/AnimatedCard"
-import { cn } from "@/lib/utils"
 import type { BenchmarkResult } from "@/types/benchmark"
 
 interface Performance3DProps {

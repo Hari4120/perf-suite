@@ -13,7 +13,6 @@ import {
   Settings
 } from "lucide-react"
 import { AnimatedButton } from "@/components/ui/AnimatedButton"
-import { AnimatedCard, AnimatedCardHeader, AnimatedCardTitle, AnimatedCardContent } from "@/components/ui/AnimatedCard"
 import type { BenchmarkResult } from "@/types/benchmark"
 
 interface ExportSystemProps {
