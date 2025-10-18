@@ -184,15 +184,14 @@ export default function Dashboard() {
         </Card>
 
         {/* Results */}
-        {currentResult?.stats && (
+        {currentResult?.stats && currentResult.benchmarkType !== 'speed-test' && (
           <>
             {/* Statistics Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[
-                { label: "Average", value: formatDuration(currentResult.stats.avg), color: "blue" },
-                { label: "Median", value: formatDuration(currentResult.stats.median), color: "green" },
-                { label: "95th %ile", value: formatDuration(currentResult.stats.p95), color: "orange" },
-                { label: "Failed", value: currentResult.stats.failed.toString(), color: "red" }
+                { label: "Average", value: formatDuration(currentResult.stats.avg) },
+                { label: "Min", value: formatDuration(currentResult.stats.min) },
+                { label: "Max", value: formatDuration(currentResult.stats.max) }
               ].map((stat) => (
                 <Card key={stat.label}>
                   <CardContent className="pt-6">
@@ -205,27 +204,6 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-
-            {/* Charts */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Response Times</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <LazyLatencyChart data={currentResult.results} />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Distribution</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <LazyHistogramChart data={currentResult.results} />
-                </CardContent>
-              </Card>
             </div>
           </>
         )}

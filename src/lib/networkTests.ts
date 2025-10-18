@@ -231,65 +231,72 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('speed', 60, 'Testing upload speeds...')
 
-  // Real upload speed testing - client-side timing for accuracy
-  // Use 4MB max to stay under Vercel's limit, but adjust based on connection speed
+  // Real upload speed testing - use multiple smaller uploads for accuracy
   let uploadSpeed = avgDownloadSpeed * 0.15 // Fallback estimate
   const uploadTests: number[] = []
 
-  // Determine optimal upload size based on download speed
-  // Target: similar duration to download test (3-5 seconds)
-  const targetUploadDuration = 4 // seconds
-  const estimatedUploadSpeed = avgDownloadSpeed * 0.4 // Assume upload is ~40% of download
-  let uploadSizeMB = Math.min(4, (estimatedUploadSpeed * targetUploadDuration) / 8) // Stay under 4MB
-  uploadSizeMB = Math.max(1, uploadSizeMB) // At least 1MB
+  // Use smaller chunks for more accurate measurement (avoid server processing delays)
+  const chunkSizes = [1, 2, 3] // MB - stay well under Vercel's limit
 
-  // Run multiple upload tests for accuracy
-  for (let uploadAttempt = 0; uploadAttempt < 3; uploadAttempt++) {
+  for (let i = 0; i < chunkSizes.length; i++) {
     try {
-      const testDataSize = Math.floor(uploadSizeMB * 1024 * 1024)
-      const testData = new Blob([new ArrayBuffer(testDataSize)])
+      const testDataSize = chunkSizes[i] * 1024 * 1024
+
+      // Create ArrayBuffer and measure only the network upload time
+      const testData = new ArrayBuffer(testDataSize)
+      const blob = new Blob([testData])
 
       const formData = new FormData()
-      formData.append('data', testData)
+      formData.append('data', blob, 'upload-test.bin')
 
-      // Measure upload time on client side
+      // Start timing just before upload
       const uploadStart = performance.now()
+
       const uploadResponse = await fetch('/api/upload-test', {
         method: 'POST',
         body: formData,
-        signal: AbortSignal.timeout(30000) // 30 second timeout
+        signal: AbortSignal.timeout(30000)
       })
 
-      if (uploadResponse.ok) {
-        const uploadDuration = (performance.now() - uploadStart) / 1000 // seconds
-        const actualUploadSizeMB = testDataSize / (1024 * 1024)
-        const measuredUploadSpeed = (actualUploadSizeMB * 8) / uploadDuration // Mbps
+      // Stop timing when response is received
+      const uploadEnd = performance.now()
 
-        // Only accept realistic speeds
-        if (measuredUploadSpeed > 0.1 && measuredUploadSpeed < 10000 && uploadDuration > 0.3) {
+      if (uploadResponse.ok) {
+        const uploadDuration = (uploadEnd - uploadStart) / 1000 // seconds
+        const uploadSizeMB = testDataSize / (1024 * 1024)
+
+        // Calculate speed: (size in MB * 8 bits per byte) / duration in seconds = Mbps
+        const measuredUploadSpeed = (uploadSizeMB * 8) / uploadDuration
+
+        // Only accept realistic speeds (> 0.1 Mbps and < 1 Gbps)
+        if (measuredUploadSpeed > 0.1 && measuredUploadSpeed < 1000 && uploadDuration > 0.2) {
           uploadTests.push(measuredUploadSpeed)
 
-          updateProgress('speed', 60 + (uploadAttempt + 1) * 3,
-            `Upload: ${measuredUploadSpeed.toFixed(2)} Mbps (${actualUploadSizeMB.toFixed(1)}MB in ${uploadDuration.toFixed(1)}s)`, currentScore)
+          const uploadScore = Math.min(100, (measuredUploadSpeed / 50) * 100)
+          measurements.push({
+            timestamp: Date.now(),
+            type: 'speed',
+            value: measuredUploadSpeed,
+            score: uploadScore,
+            phase: 'Upload Test'
+          })
+
+          updateProgress('speed', 60 + (i + 1) * 3,
+            `Upload: ${measuredUploadSpeed.toFixed(1)} Mbps`, uploadScore)
         }
       }
+
+      // Small delay between tests
+      await new Promise(resolve => setTimeout(resolve, 500))
     } catch (error) {
-      console.warn(`Upload test attempt ${uploadAttempt + 1} failed:`, error)
+      console.warn(`Upload test ${i + 1} failed:`, error)
     }
   }
 
-  // Calculate average upload speed
+  // Use median upload speed for better accuracy (removes outliers)
   if (uploadTests.length > 0) {
-    uploadSpeed = uploadTests.reduce((a, b) => a + b, 0) / uploadTests.length
-
-    const uploadScore = Math.min(100, (uploadSpeed / 50) * 100)
-    measurements.push({
-      timestamp: Date.now(),
-      type: 'speed',
-      value: uploadSpeed,
-      score: uploadScore,
-      phase: 'Upload Test'
-    })
+    const sortedSpeeds = [...uploadTests].sort((a, b) => a - b)
+    uploadSpeed = sortedSpeeds[Math.floor(sortedSpeeds.length / 2)]
   }
   
   updateProgress('dns', 65, 'Measuring connection quality...')
