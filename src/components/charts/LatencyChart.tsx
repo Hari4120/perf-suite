@@ -9,11 +9,12 @@ import {
   PointElement,
   Tooltip,
   Legend,
+  Filler,
   ChartOptions,
 } from "chart.js"
 import { useTheme } from "next-themes"
 
-ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend)
+ChartJS.register(LineElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, Filler)
 
 interface LatencyChartProps {
   data: number[]

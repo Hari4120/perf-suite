@@ -32,12 +32,10 @@ export interface TestProgress {
 }
 
 // Reliable low-latency test endpoints optimized for speed
+// Only use endpoints that support CORS from browser
 const TEST_ENDPOINTS = [
-  'https://www.cloudflare.com/cdn-cgi/trace',      // Cloudflare edge - globally distributed
-  'https://1.1.1.1/cdn-cgi/trace',                 // Cloudflare DNS - very fast
-  'https://www.google.com/generate_204',            // Google no-content endpoint - optimized for speed
-  'https://httpbin.org/get',                        // Fallback general purpose
-  'https://api.github.com/zen'                      // Fallback API
+  'https://www.cloudflare.com/cdn-cgi/trace',      // Cloudflare edge - globally distributed, CORS enabled
+  'https://speed.cloudflare.com/__down?bytes=1000', // Cloudflare speed test endpoint
 ]
 
 // Use larger files from reliable CDN sources for accurate speed testing
@@ -94,23 +92,18 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('latency', 10, 'Testing connection latency...')
 
-  // Real latency testing with ICMP-style ping using lightweight HEAD requests
+  // Real latency testing using lightweight endpoints
   const latencyTests: number[] = []
-  const latencyTestCount = 20 // More samples for accuracy
+  const latencyTestCount = 15 // More samples for accuracy
 
-  // Use ultra-lightweight endpoints for true latency (not download time)
-  const latencyEndpoints = [
-    'https://www.cloudflare.com/cdn-cgi/trace',  // Cloudflare edge
-    'https://www.google.com/generate_204',        // Google no-content
-  ]
+  // Use Cloudflare trace endpoint which allows CORS
+  const latencyEndpoint = 'https://www.cloudflare.com/cdn-cgi/trace'
 
   for (let i = 0; i < latencyTestCount; i++) {
     try {
-      const endpoint = latencyEndpoints[i % latencyEndpoints.length]
-
       const start = performance.now()
-      await fetch(endpoint, {
-        method: 'HEAD', // HEAD = minimal data transfer
+      await fetch(latencyEndpoint, {
+        method: 'GET',
         cache: 'no-cache',
         signal: AbortSignal.timeout(2000)
       })
@@ -245,8 +238,8 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   // Run multiple upload tests for accuracy
   for (let uploadAttempt = 0; uploadAttempt < 3; uploadAttempt++) {
     try {
-      // Create test data (10MB for upload test)
-      const testDataSize = 10 * 1024 * 1024 // 10MB
+      // Create test data (4MB to stay under Vercel's limit)
+      const testDataSize = 4 * 1024 * 1024 // 4MB
       const testData = new Blob([new ArrayBuffer(testDataSize)])
 
       const formData = new FormData()
