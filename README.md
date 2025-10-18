@@ -1,257 +1,493 @@
-# 🚀 Performance Benchmark Suite
+# 🚀 Performance Benchmark Suite v2.0
 
-A professional-grade API performance benchmarking and analysis tool built with Next.js 15, TypeScript, and Chart.js.
+A **professional-grade, enterprise-ready** API performance benchmarking and network diagnostics platform built with cutting-edge technologies for 2025.
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Hari4120/perf-suite)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/Hari4120/perf-suite)
+[![CI/CD Pipeline](https://github.com/Hari4120/perf-suite/workflows/CI%2FCD%20Pipeline/badge.svg)](https://github.com/Hari4120/perf-suite/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## ✨ Features
+---
 
-### 🎯 Multiple Benchmark Types
-- **Latency Testing** - Sequential requests to measure baseline response times
-- **Throughput Testing** - Concurrent requests to measure maximum capacity
-- **Load Testing** - Realistic load simulation for normal operating conditions
-- **Stress Testing** - Push APIs to their limits to identify breaking points
+## ✨ What's New in v2.0
 
-### 📊 Advanced Analytics
-- **Real-time Charts** - Live performance monitoring during tests
-- **Statistical Analysis** - Min, max, average, median, 95th/99th percentiles
-- **Distribution Histograms** - Visualize response time patterns
-- **Comparison Views** - Compare multiple benchmark results
-- **Performance Trends** - Track changes over time
+### 🏗️ Enterprise Architecture
+- **PostgreSQL + Prisma ORM** - Production-ready database with type-safe queries
+- **NextAuth.js v5** - Modern authentication ready for multi-user support
+- **API Rate Limiting** - Built-in protection with configurable limits
+- **Zod Validation** - Runtime type checking and input validation
+- **Docker Support** - Containerized deployment with docker-compose
 
-### 🛠️ Professional Features
+### 🔒 Security First
+- Rate limiting middleware (configurable per endpoint)
+- Input validation with detailed error messages
+- Security headers (CSP, X-Frame-Options, CORS)
+- Environment-based configuration
+- HTTPS-ready with secure defaults
+
+### 🧪 Quality Assurance
+- **Jest** - Unit testing with React Testing Library
+- **Playwright** - E2E testing across all major browsers
+- **CI/CD Pipeline** - Automated testing and deployment via GitHub Actions
+- **Code Coverage** - Automated coverage reporting
+
+### 📊 Advanced Features
+- Real-time WebSocket support (ready for streaming)
+- Advanced data visualization with Recharts
+- State management with Zustand
+- React Query for efficient data fetching
+- PWA capabilities with offline support
+
+---
+
+## 🎯 Features Overview
+
+### 📈 Comprehensive Benchmarking
+- **Latency Testing** - Sequential requests for baseline performance
+- **Throughput Testing** - Concurrent load capacity measurement
+- **Load Testing** - Realistic traffic simulation
+- **Stress Testing** - Breaking point identification
+
+### 🌐 Network Diagnostics
+- **Internet Speed Test** - Download/upload speed measurement
+- **Buffer Bloat Detection** - Network buffering analysis
+- **DNS Resolution Testing** - Domain lookup performance
+- **Network Quality Score** - Comprehensive connection assessment
+
+### 🤖 Intelligent Analysis
+- **AI-Powered Recommendations** - Smart optimization suggestions
+- **Anomaly Detection** - Automatic performance issue identification
+- **Performance Trends** - Historical analysis and comparison
+- **Real-time Monitoring** - Live performance tracking
+
+### 💎 Professional UI/UX
 - **Dark/Light Mode** - Seamless theme switching
-- **Export Functionality** - Download results as JSON
-- **Data Persistence** - Local storage for session continuity
-- **Responsive Design** - Perfect on desktop, tablet, and mobile
-- **TypeScript** - Full type safety and excellent DX
-- **Modern UI** - Clean, professional interface
+- **Responsive Design** - Perfect on all devices
+- **Smooth Animations** - Framer Motion powered
+- **Accessibility** - WCAG 2.1 AA compliant
+- **Interactive Charts** - Real-time data visualization
+
+---
 
 ## 🚀 Quick Start
 
-### 1. Clone the Repository
+### Prerequisites
+- Node.js 18.18.0 or higher
+- PostgreSQL 14+ (optional, for persistent storage)
+- Docker & Docker Compose (optional, for containerized setup)
+
+### 1. Clone & Install
+
 ```bash
 git clone https://github.com/Hari4120/perf-suite.git
 cd perf-suite
-```
-
-### 2. Install Dependencies
-```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
 
-### 3. Run Development Server
+### 2. Environment Setup
+
+```bash
+cp .env.example .env.local
+```
+
+Edit `.env.local` with your configuration:
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/perf_bench"
+NEXTAUTH_SECRET="your-secret-here"
+NEXTAUTH_URL="http://localhost:3000"
+```
+
+### 3. Database Setup (Optional)
+
+```bash
+# Start PostgreSQL with Docker
+npm run docker:up
+
+# Run migrations
+npm run prisma:migrate
+
+# Open Prisma Studio (optional)
+npm run prisma:studio
+```
+
+### 4. Development Server
+
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-### 4. Open Your Browser
-Navigate to [http://localhost:3000](http://localhost:3000) to start benchmarking!
+Open [http://localhost:3000](http://localhost:3000) to start benchmarking!
 
-## 📖 Usage Guide
+---
 
-### Basic Latency Test
-1. Enter your API endpoint URL
-2. Select "Latency Test" as the benchmark type
-3. Configure the number of runs (1-100)
-4. Set timeout value (default: 10 seconds)
-5. Click "Run Benchmark"
+## 🐳 Docker Deployment
 
-### Advanced Load Testing
-1. Choose "Load Test" or "Stress Test"
-2. Configure concurrent requests (1-100)
-3. Set test duration (5-300 seconds)
-4. Adjust timeout as needed
-5. Monitor real-time results
+### Quick Start with Docker Compose
 
-### Analyzing Results
-- **Statistics Cards** - View key metrics at a glance
-- **Response Time Trend** - Line chart showing per-request latency
-- **Distribution Histogram** - See response time patterns
-- **Comparison Chart** - Compare multiple test results
-- **Results History** - Review past benchmarks
+```bash
+# Start all services (app + PostgreSQL + Redis)
+npm run docker:up
 
-## 🏗️ Architecture
+# View logs
+npm run docker:logs
 
-### Tech Stack
-- **Frontend**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS v4
-- **Charts**: Chart.js + react-chartjs-2
-- **Icons**: Lucide React
-- **Theme**: next-themes
-- **Language**: TypeScript
+# Stop services
+npm run docker:down
+```
 
-### Project Structure
+### Production Build
+
+```bash
+# Build production image
+docker build -t perf-bench-suite .
+
+# Run container
+docker run -p 3000:3000 \
+  -e DATABASE_URL="your-database-url" \
+  -e NEXTAUTH_SECRET="your-secret" \
+  perf-bench-suite
+```
+
+---
+
+## 📚 Available Scripts
+
+### Development
+```bash
+npm run dev          # Start development server with Turbopack
+npm run dev:https    # Start with HTTPS (requires setup)
+```
+
+### Building & Starting
+```bash
+npm run build        # Build for production
+npm start            # Start production server
+npm run typecheck    # TypeScript type checking
+```
+
+### Testing
+```bash
+npm test             # Run unit tests
+npm run test:watch   # Run tests in watch mode
+npm run test:coverage # Generate coverage report
+npm run test:e2e     # Run E2E tests with Playwright
+npm run test:e2e:ui  # Run E2E tests with UI
+```
+
+### Database (Prisma)
+```bash
+npm run prisma:generate # Generate Prisma Client
+npm run prisma:migrate  # Run database migrations
+npm run prisma:studio   # Open Prisma Studio GUI
+npm run prisma:push     # Push schema without migrations
+```
+
+### Code Quality
+```bash
+npm run lint         # Run ESLint
+npm run lint:fix     # Fix ESLint issues
+npm run format       # Format code with Prettier
+```
+
+### Docker
+```bash
+npm run docker:up    # Start Docker services
+npm run docker:down  # Stop Docker services
+npm run docker:logs  # View container logs
+```
+
+---
+
+## 🏗️ Project Structure
+
 ```
 perf-bench-suite/
+├── .github/
+│   └── workflows/
+│       └── ci.yml              # CI/CD pipeline configuration
+├── e2e/
+│   └── homepage.spec.ts        # E2E tests
+├── prisma/
+│   └── schema.prisma           # Database schema
 ├── src/
 │   ├── app/
-│   │   ├── api/benchmark/route.ts    # Serverless API endpoint
-│   │   ├── globals.css               # Global styles & theme variables
-│   │   ├── layout.tsx                # Root layout with theme provider
-│   │   └── page.tsx                  # Main dashboard
+│   │   ├── api/
+│   │   │   ├── benchmark/
+│   │   │   │   └── route.ts    # Benchmark API with validation
+│   │   │   └── network-test/
+│   │   │       └── route.ts    # Network testing API
+│   │   ├── layout.tsx          # Root layout
+│   │   ├── page.tsx            # Main dashboard
+│   │   └── globals.css         # Global styles
 │   ├── components/
-│   │   ├── charts/                   # Chart components
-│   │   │   ├── LatencyChart.tsx
-│   │   │   ├── HistogramChart.tsx
-│   │   │   ├── ComparisonChart.tsx
-│   │   │   └── RealTimeChart.tsx
-│   │   ├── ui/                       # UI primitives
-│   │   │   ├── Button.tsx
-│   │   │   ├── Card.tsx
-│   │   │   └── Input.tsx
-│   │   ├── ThemeToggle.tsx           # Dark/light mode toggle
-│   │   └── theme-provider.tsx        # Theme context provider
+│   │   ├── charts/             # Chart components
+│   │   ├── ui/                 # UI primitives
+│   │   ├── NetworkTests.tsx    # Network testing UI
+│   │   ├── AIRecommendations.tsx
+│   │   ├── AnomalyDetector.tsx
+│   │   └── ...
 │   ├── lib/
-│   │   └── utils.ts                  # Utility functions
+│   │   ├── utils.ts            # Utility functions
+│   │   ├── validation.ts       # Zod schemas
+│   │   ├── middleware.ts       # API middleware
+│   │   ├── networkTests.ts     # Network test logic
+│   │   └── __tests__/          # Unit tests
 │   └── types/
-│       └── benchmark.ts              # TypeScript definitions
-├── package.json
-└── README.md
+│       └── benchmark.ts        # TypeScript types
+├── docker-compose.yml          # Docker services config
+├── Dockerfile                  # Production Docker image
+├── jest.config.js              # Jest configuration
+├── playwright.config.ts        # Playwright configuration
+├── next.config.ts              # Next.js configuration
+├── tailwind.config.ts          # Tailwind CSS config
+└── package.json                # Dependencies & scripts
 ```
 
-## 🎨 Customization
+---
 
-### Adding New Chart Types
-1. Create a new component in `src/components/charts/`
-2. Import Chart.js modules as needed
-3. Add responsive design and theme support
-4. Export and use in dashboard
+## 🔧 Configuration
 
-### Custom Benchmark Types
-1. Extend the `BenchmarkType` type in `src/types/benchmark.ts`
-2. Add logic to the API route in `src/app/api/benchmark/route.ts`
-3. Update the UI to include the new option
+### Environment Variables
 
-### Theming
-Customize the design system by modifying CSS variables in `src/app/globals.css`:
-- Colors: Primary, secondary, accent, destructive
-- Spacing: Radius, borders, shadows
-- Typography: Font families, sizes
+| Variable | Description | Required | Default |
+|----------|-------------|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string | No | - |
+| `NEXTAUTH_URL` | Application URL | No | http://localhost:3000 |
+| `NEXTAUTH_SECRET` | Auth secret key | No | - |
+| `ALLOWED_ORIGINS` | CORS allowed origins | No | http://localhost:3000 |
+| `API_RATE_LIMIT_WINDOW_MS` | Rate limit window | No | 60000 |
+| `API_RATE_LIMIT_MAX_REQUESTS` | Max requests per window | No | 100 |
+
+### API Rate Limiting
+
+Customize rate limiting in your API routes:
+
+```typescript
+import { rateLimit } from '@/lib/middleware'
+
+// Apply rate limiting
+const rateLimitCheck = rateLimit({
+  windowMs: 60000,      // 1 minute
+  maxRequests: 20       // 20 requests per minute
+})(req)
+```
+
+### Input Validation
+
+All API inputs are validated using Zod schemas:
+
+```typescript
+import { benchmarkConfigSchema } from '@/lib/validation'
+
+const result = benchmarkConfigSchema.safeParse(body)
+if (!result.success) {
+  // Handle validation errors
+}
+```
+
+---
+
+## 🧪 Testing
+
+### Unit Tests
+
+```bash
+# Run all unit tests
+npm test
+
+# Watch mode for development
+npm run test:watch
+
+# Generate coverage report
+npm run test:coverage
+```
+
+### E2E Tests
+
+```bash
+# Run all E2E tests
+npm run test:e2e
+
+# Run with UI mode
+npm run test:e2e:ui
+
+# Run specific test
+npx playwright test e2e/homepage.spec.ts
+```
+
+---
+
+## 📊 Usage Examples
+
+### Basic Latency Test
+
+1. Enter API endpoint: `https://api.example.com/health`
+2. Select "Latency Test"
+3. Configure runs (1-100)
+4. Click "Run Benchmark"
+5. View real-time results and statistics
+
+### Network Speed Test
+
+1. Scroll to "Network & Internet Tests"
+2. Click "Internet Speed Test"
+3. Wait for automatic testing
+4. Review download/upload speeds and latency
+
+### Comparing Performance
+
+1. Run multiple benchmarks on the same endpoint
+2. Scroll to "Performance Comparison" chart
+3. Analyze trends and identify regressions
+4. Export results as JSON for external analysis
+
+---
 
 ## 🚀 Deployment
 
 ### Vercel (Recommended)
-1. Push your code to GitHub
-2. Import project in [Vercel Dashboard](https://vercel.com/new)
-3. Deploy with zero configuration
 
-### Netlify
-1. Push your code to GitHub
-2. Connect repository in [Netlify](https://app.netlify.com)
-3. Set build command: `npm run build`
-4. Set publish directory: `out` (for static export)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Hari4120/perf-suite)
 
-### Docker
-```dockerfile
-FROM node:18-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
+1. Click the deploy button
+2. Connect your GitHub repository
+3. Configure environment variables
+4. Deploy instantly
+
+### Manual Deployment
+
+```bash
+# Build the application
+npm run build
+
+# Start production server
+npm start
 ```
+
+### Docker Production
+
+```bash
+# Build and run with docker-compose
+docker-compose up -d
+
+# Scale the application
+docker-compose up -d --scale app=3
+```
+
+---
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+We welcome contributions! Please follow these steps:
 
-### Development Setup
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Make your changes and add tests
-4. Commit: `git commit -m 'Add amazing feature'`
-5. Push: `git push origin feature/amazing-feature`
-6. Open a Pull Request
+3. Make your changes
+4. Write tests for new functionality
+5. Ensure all tests pass: `npm test && npm run test:e2e`
+6. Commit your changes: `git commit -m 'Add amazing feature'`
+7. Push to the branch: `git push origin feature/amazing-feature`
+8. Open a Pull Request
 
-## 📊 Benchmark Types Explained
+### Development Guidelines
 
-### Latency Testing
-Measures response times with sequential requests to understand baseline performance. Ideal for:
-- API health checks
-- SLA validation
-- Performance regression testing
+- Follow the existing code style
+- Write meaningful commit messages
+- Add tests for new features
+- Update documentation as needed
+- Ensure CI/CD pipeline passes
 
-### Throughput Testing
-Tests concurrent request handling to measure maximum capacity. Perfect for:
-- Scalability assessment
-- Resource utilization analysis
-- Performance optimization
+---
 
-### Load Testing
-Simulates realistic traffic patterns for normal operating conditions. Great for:
-- Production readiness validation
-- Capacity planning
-- Performance monitoring
+## 📈 Roadmap
 
-### Stress Testing
-Pushes APIs beyond normal capacity to identify breaking points. Essential for:
-- Failure mode analysis
-- System resilience testing
-- Infrastructure limits discovery
+### v2.1 (Q1 2025)
+- [ ] Real-time WebSocket streaming for live test updates
+- [ ] User authentication with GitHub/Google OAuth
+- [ ] Team collaboration features
+- [ ] Advanced AI performance predictions
+- [ ] Custom alert configurations
 
-## 🔧 Configuration Options
+### v2.2 (Q2 2025)
+- [ ] API key management
+- [ ] Scheduled benchmark runs
+- [ ] Slack/Discord integrations
+- [ ] PDF report generation
+- [ ] Performance budget alerts
 
-### Request Configuration
-- **URL**: Target endpoint for benchmarking
-- **Timeout**: Maximum wait time per request (1-60 seconds)
-- **Runs**: Number of sequential requests (latency tests only)
-- **Concurrency**: Parallel request count (load/stress tests)
-- **Duration**: Test duration in seconds (load/stress tests)
+### v3.0 (Q3 2025)
+- [ ] Distributed load testing
+- [ ] Global CDN performance testing
+- [ ] Mobile app (React Native)
+- [ ] Advanced ML-powered anomaly detection
+- [ ] Multi-region deployment support
 
-### Output Metrics
-- **Min/Max/Average**: Basic response time statistics
-- **Median**: Middle value for better central tendency
-- **95th/99th Percentile**: Understanding tail latency
-- **Failed Requests**: Error rate monitoring
-- **Request Count**: Total successful requests
+---
 
 ## 🐛 Troubleshooting
 
 ### Common Issues
 
-**CORS Errors**
-- Ensure your API supports CORS or test localhost endpoints
-- Use browser dev tools to check for CORS headers
+**Build Errors**
+```bash
+# Clear cache and reinstall
+rm -rf .next node_modules
+npm install
+npm run build
+```
 
-**High Response Times**
-- Check network connectivity
-- Verify API server performance
-- Consider geographic latency
+**Database Connection Issues**
+```bash
+# Check PostgreSQL is running
+docker ps
 
-**Failed Requests**
-- Increase timeout values
-- Check API authentication requirements
-- Verify endpoint URL format
+# Restart database
+npm run docker:down
+npm run docker:up
+```
 
-## 📝 License
+**Test Failures**
+```bash
+# Update test snapshots
+npm test -- -u
+
+# Clear Jest cache
+npm test -- --clearCache
+```
+
+---
+
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
 
 ## 🙏 Acknowledgments
 
 - [Next.js](https://nextjs.org/) - The React framework for production
-- [Chart.js](https://www.chartjs.org/) - Simple yet flexible JavaScript charting
-- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
-- [Lucide](https://lucide.dev/) - Beautiful & consistent icons
+- [Prisma](https://www.prisma.io/) - Next-generation ORM
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS framework
+- [Framer Motion](https://www.framer.com/motion/) - Animation library
+- [Chart.js](https://www.chartjs.org/) - Simple yet flexible charting
+- [Zod](https://zod.dev/) - TypeScript-first schema validation
+
+---
+
+## 📞 Support
+
+- 📧 Email: support@perfbenchsuite.com
+- 🐛 Issues: [GitHub Issues](https://github.com/Hari4120/perf-suite/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/Hari4120/perf-suite/discussions)
+- 📖 Documentation: [Wiki](https://github.com/Hari4120/perf-suite/wiki)
 
 ---
 
 <div align="center">
 
-**[🚀 Deploy Now](https://vercel.com/new/clone?repository-url=https://github.com/Hari4120/perf-suite)** | **[📖 Documentation](https://github.com/Hari4120/perf-suite/wiki)** | **[🐛 Report Bug](https://github.com/Hari4120/perf-suite/issues)**
+**[🚀 Deploy Now](https://vercel.com/new/clone?repository-url=https://github.com/Hari4120/perf-suite)** | **[📖 Documentation](https://github.com/Hari4120/perf-suite/wiki)** | **[🐛 Report Bug](https://github.com/Hari4120/perf-suite/issues)** | **[💡 Request Feature](https://github.com/Hari4120/perf-suite/issues/new)**
 
-Made with ❤️ for developers who care about performance
+Made with ❤️ by developers who care about performance
+
+**⭐ Star us on GitHub — it helps!**
 
 </div>

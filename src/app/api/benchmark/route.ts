@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server"
 import type { BenchmarkConfig, BenchmarkResult, BenchmarkStats } from "@/types/benchmark"
+import { benchmarkConfigSchema } from "@/lib/validation"
+import { rateLimit } from "@/lib/middleware"
 
 function calculateStats(values: number[]): BenchmarkStats | null {
   const valid = values.filter(v => v > 0)
@@ -125,19 +127,26 @@ async function runStressBenchmark(url: string, maxConcurrent: number, duration: 
 
 export async function POST(req: Request) {
   try {
-    const config: BenchmarkConfig = await req.json()
-    
-    const { url, type, runs = 5, timeout = 10000, concurrent = 10, duration = 30 } = config
-    
-    if (!url) {
-      return NextResponse.json({ error: "URL is required" }, { status: 400 })
+    // Apply rate limiting
+    const rateLimitCheck = rateLimit({ windowMs: 60000, maxRequests: 20 })(req as any)
+    if (rateLimitCheck) return rateLimitCheck
+
+    const body = await req.json()
+
+    // Validate input with Zod
+    const validationResult = benchmarkConfigSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: "Invalid request parameters", details: validationResult.error.errors },
+        { status: 400 }
+      )
     }
-    
-    // Validate URL
-    try {
-      new URL(url)
-    } catch {
-      return NextResponse.json({ error: "Invalid URL format" }, { status: 400 })
+
+    const config: BenchmarkConfig = validationResult.data as BenchmarkConfig
+    const { url, type, runs = 5, timeout = 10000, concurrent = 10, duration = 30 } = config
+
+    if (!url && !['speed-test', 'buffer-bloat', 'dns-test', 'network-quality'].includes(type)) {
+      return NextResponse.json({ error: "URL is required for this benchmark type" }, { status: 400 })
     }
     
     let results: number[] = []
