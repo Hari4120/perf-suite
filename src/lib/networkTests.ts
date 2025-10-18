@@ -232,14 +232,21 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   updateProgress('speed', 60, 'Testing upload speeds...')
 
   // Real upload speed testing - client-side timing for accuracy
+  // Use 4MB max to stay under Vercel's limit, but adjust based on connection speed
   let uploadSpeed = avgDownloadSpeed * 0.15 // Fallback estimate
   const uploadTests: number[] = []
+
+  // Determine optimal upload size based on download speed
+  // Target: similar duration to download test (3-5 seconds)
+  const targetUploadDuration = 4 // seconds
+  const estimatedUploadSpeed = avgDownloadSpeed * 0.4 // Assume upload is ~40% of download
+  let uploadSizeMB = Math.min(4, (estimatedUploadSpeed * targetUploadDuration) / 8) // Stay under 4MB
+  uploadSizeMB = Math.max(1, uploadSizeMB) // At least 1MB
 
   // Run multiple upload tests for accuracy
   for (let uploadAttempt = 0; uploadAttempt < 3; uploadAttempt++) {
     try {
-      // Create test data (4MB to stay under Vercel's limit)
-      const testDataSize = 4 * 1024 * 1024 // 4MB
+      const testDataSize = Math.floor(uploadSizeMB * 1024 * 1024)
       const testData = new Blob([new ArrayBuffer(testDataSize)])
 
       const formData = new FormData()
@@ -255,15 +262,15 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
 
       if (uploadResponse.ok) {
         const uploadDuration = (performance.now() - uploadStart) / 1000 // seconds
-        const uploadSizeMB = testDataSize / (1024 * 1024)
-        const measuredUploadSpeed = (uploadSizeMB * 8) / uploadDuration // Mbps
+        const actualUploadSizeMB = testDataSize / (1024 * 1024)
+        const measuredUploadSpeed = (actualUploadSizeMB * 8) / uploadDuration // Mbps
 
         // Only accept realistic speeds
         if (measuredUploadSpeed > 0.1 && measuredUploadSpeed < 10000 && uploadDuration > 0.3) {
           uploadTests.push(measuredUploadSpeed)
 
           updateProgress('speed', 60 + (uploadAttempt + 1) * 3,
-            `Upload: ${measuredUploadSpeed.toFixed(2)} Mbps`, currentScore)
+            `Upload: ${measuredUploadSpeed.toFixed(2)} Mbps (${actualUploadSizeMB.toFixed(1)}MB in ${uploadDuration.toFixed(1)}s)`, currentScore)
         }
       }
     } catch (error) {
