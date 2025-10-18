@@ -137,7 +137,7 @@ export async function POST(req: Request) {
     const validationResult = benchmarkConfigSchema.safeParse(body)
     if (!validationResult.success) {
       return NextResponse.json(
-        { error: "Invalid request parameters", details: validationResult.error.errors },
+        { error: "Invalid request parameters", details: validationResult.error.issues },
         { status: 400 }
       )
     }
