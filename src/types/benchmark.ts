@@ -27,6 +27,7 @@ export interface NetworkTestData {
   isp?: string
   location?: string
   qualityScore?: number // 0-100
+  testDuration?: number // seconds
 }
 
 export interface BenchmarkStats {
