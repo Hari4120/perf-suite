@@ -45,8 +45,7 @@ const SPEED_TEST_FILES = [
   { url: 'https://speed.cloudflare.com/__down?bytes=50000000', size: 50000000, name: '50MB' },    // 50MB
   { url: 'https://speed.cloudflare.com/__down?bytes=100000000', size: 100000000, name: '100MB' }, // 100MB
   { url: 'https://speed.cloudflare.com/__down?bytes=200000000', size: 200000000, name: '200MB' },  // 200MB
-  { url: 'https://speed.cloudflare.com/__down?bytes=500000000', size: 500000000, name: '500MB' },  // 500MB
-  { url: 'https://speed.cloudflare.com/__down?bytes=1000000000', size: 1000000000, name: '1GB' }   // 1GB
+  { url: 'https://speed.cloudflare.com/__down?bytes=500000000', size: 500000000, name: '500MB' }  // 500MB
 ]
 
 // Get the best available endpoint based on connectivity
@@ -234,61 +233,72 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('speed', 60, 'Testing upload speeds...')
 
-  // Real upload speed testing using streaming approach
+  // Real upload speed testing - download files and upload them back
   let uploadSpeed = avgDownloadSpeed * 0.4 // Reasonable fallback estimate
   const uploadTests: number[] = []
 
-  // Perform multiple upload tests with increasing sizes for accuracy
-  const uploadSizes = [2, 3, 4] // MB sizes to test
+  // Use same file sizes as download test for consistency (10MB, 25MB)
+  const uploadTestFiles = [SPEED_TEST_FILES[0], SPEED_TEST_FILES[1]]
 
-  for (let i = 0; i < uploadSizes.length; i++) {
+  for (let i = 0; i < uploadTestFiles.length; i++) {
     try {
-      const sizeInBytes = uploadSizes[i] * 1024 * 1024
+      const testFile = uploadTestFiles[i]
 
-      // Generate random data to prevent compression
-      const randomData = new Uint8Array(sizeInBytes)
-      crypto.getRandomValues(randomData)
-      const blob = new Blob([randomData])
+      // Download the file first
+      updateProgress('speed', 60 + (i * 5), `Preparing ${testFile.name} upload...`, currentScore)
 
-      // Use XMLHttpRequest for more accurate upload progress tracking
+      const downloadResponse = await fetch(testFile.url, {
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(20000)
+      })
+
+      if (!downloadResponse.ok || !downloadResponse.body) continue
+
+      // Read downloaded data
+      const reader = downloadResponse.body.getReader()
+      const chunks: Uint8Array[] = []
+      let totalSize = 0
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        chunks.push(value)
+        totalSize += value.length
+      }
+
+      const blob = new Blob(chunks)
+
+      // Upload and measure speed
+      updateProgress('speed', 60 + (i * 5) + 2, `Uploading ${testFile.name}...`, currentScore)
+
       const uploadStart = performance.now()
 
       const uploadPromise = new Promise<number>((resolve, reject) => {
         const xhr = new XMLHttpRequest()
 
-        xhr.upload.addEventListener('loadstart', () => {
-          // Track when actual upload starts
-        })
-
-        xhr.upload.addEventListener('progress', (e) => {
-          if (e.lengthComputable) {
-            // We could track progress here if needed
-          }
-        })
-
         xhr.upload.addEventListener('loadend', () => {
-          // Upload complete - this is when data finished sending
           const uploadEnd = performance.now()
           const duration = (uploadEnd - uploadStart) / 1000
-          const sizeMB = sizeInBytes / (1024 * 1024)
+          const sizeMB = totalSize / (1024 * 1024)
           const speedMbps = (sizeMB * 8) / duration
           resolve(speedMbps)
         })
 
         xhr.addEventListener('error', () => reject(new Error('Upload failed')))
         xhr.addEventListener('abort', () => reject(new Error('Upload aborted')))
+        xhr.addEventListener('timeout', () => reject(new Error('Upload timeout')))
 
         xhr.open('POST', '/api/upload-test')
+        xhr.timeout = 30000
 
         const formData = new FormData()
-        formData.append('data', blob, 'test.bin')
+        formData.append('data', blob, testFile.name)
 
         xhr.send(formData)
       })
 
       const measuredSpeed = await uploadPromise
 
-      // Validate the measurement
       if (measuredSpeed > 0.5 && measuredSpeed < 1000) {
         uploadTests.push(measuredSpeed)
 
@@ -301,18 +311,17 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
           phase: 'Upload Test'
         })
 
-        updateProgress('speed', 60 + (i + 1) * 3,
-          `Upload: ${measuredSpeed.toFixed(1)} Mbps`, uploadScore)
+        updateProgress('speed', 60 + (i * 5) + 4,
+          `Upload: ${measuredSpeed.toFixed(1)} Mbps (${testFile.name})`, uploadScore)
       }
 
-      // Brief pause between tests
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise(resolve => setTimeout(resolve, 500))
     } catch (error) {
       console.warn(`Upload test ${i + 1} failed:`, error)
     }
   }
 
-  // Calculate final upload speed - use median to filter outliers
+  // Use median of tests
   if (uploadTests.length > 0) {
     const sorted = [...uploadTests].sort((a, b) => a - b)
     uploadSpeed = sorted[Math.floor(sorted.length / 2)]
