@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Performance Benchmark Suite | Professional Network Diagnostics & API Testing",
-  description: "Comprehensive performance testing platform with real-time monitoring, advanced analytics, and professional reporting. Test API latency, throughput, network quality, and generate detailed insights.",
+  title: "Performance Benchmark Suite | Network Diagnostics & API Testing",
+  description: "Comprehensive performance testing platform with real-time monitoring, advanced analytics, and reporting. Test API latency, throughput, network quality, and generate detailed insights.",
   keywords: [
     "performance testing",
     "API benchmarking", 
@@ -44,21 +44,21 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_US',
     title: 'Performance Benchmark Suite',
-    description: 'Professional network diagnostics and API performance testing platform',
+    description: 'Network diagnostics and API performance testing platform',
     siteName: 'Performance Benchmark Suite',
     images: [
       {
         url: '/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Performance Benchmark Suite - Professional Testing Platform',
+        alt: 'Performance Benchmark Suite - Testing Platform',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Performance Benchmark Suite',
-    description: 'Professional network diagnostics and API performance testing platform',
+    description: 'Network diagnostics and API performance testing platform',
     images: ['/og-image.jpg'],
   },
   robots: {

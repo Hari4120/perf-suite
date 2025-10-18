@@ -94,14 +94,14 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('latency', 10, 'Testing connection latency...')
 
-  // Real latency testing with minimal overhead
+  // Real latency testing with ICMP-style ping using lightweight HEAD requests
   const latencyTests: number[] = []
-  const latencyTestCount = 10
+  const latencyTestCount = 20 // More samples for accuracy
 
-  // Use lightweight endpoints optimized for latency measurement
+  // Use ultra-lightweight endpoints for true latency (not download time)
   const latencyEndpoints = [
-    'https://www.cloudflare.com/cdn-cgi/trace',  // Cloudflare edge - returns text instantly
-    'https://www.google.com/generate_204',        // Google no-content endpoint
+    'https://www.cloudflare.com/cdn-cgi/trace',  // Cloudflare edge
+    'https://www.google.com/generate_204',        // Google no-content
   ]
 
   for (let i = 0; i < latencyTestCount; i++) {
@@ -110,7 +110,7 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
 
       const start = performance.now()
       await fetch(endpoint, {
-        method: 'GET', // GET for trace endpoint, HEAD for 204
+        method: 'HEAD', // HEAD = minimal data transfer
         cache: 'no-cache',
         signal: AbortSignal.timeout(2000)
       })
@@ -127,14 +127,14 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
       })
 
       currentScore = latencyScore
-      updateProgress('latency', 10 + (i + 1) * 3, `Latency: ${Math.round(latency)}ms`, currentScore)
+      updateProgress('latency', 10 + (i + 1) * 1.5, `Latency: ${Math.round(latency)}ms`, currentScore)
 
     } catch {
       latencyTests.push(500)
     }
 
     // Minimal delay between tests
-    if (i < latencyTestCount - 1) await new Promise(resolve => setTimeout(resolve, 200))
+    if (i < latencyTestCount - 1) await new Promise(resolve => setTimeout(resolve, 100))
   }
 
   const avgLatency = latencyTests.reduce((a, b) => a + b, 0) / latencyTests.length
@@ -238,40 +238,58 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('speed', 60, 'Testing upload speeds...')
 
-  // Real upload speed testing
+  // Real upload speed testing - client-side timing for accuracy
   let uploadSpeed = avgDownloadSpeed * 0.15 // Fallback estimate
+  const uploadTests: number[] = []
 
-  try {
-    // Create test data (5MB for upload test)
-    const testDataSize = 5 * 1024 * 1024 // 5MB
-    const testData = new Blob([new ArrayBuffer(testDataSize)])
+  // Run multiple upload tests for accuracy
+  for (let uploadAttempt = 0; uploadAttempt < 3; uploadAttempt++) {
+    try {
+      // Create test data (10MB for upload test)
+      const testDataSize = 10 * 1024 * 1024 // 10MB
+      const testData = new Blob([new ArrayBuffer(testDataSize)])
 
-    const formData = new FormData()
-    formData.append('data', testData)
+      const formData = new FormData()
+      formData.append('data', testData)
 
-    const uploadResponse = await fetch('/api/upload-test', {
-      method: 'POST',
-      body: formData,
-      signal: AbortSignal.timeout(15000) // 15 second timeout
-    })
+      // Measure upload time on client side
+      const uploadStart = performance.now()
+      const uploadResponse = await fetch('/api/upload-test', {
+        method: 'POST',
+        body: formData,
+        signal: AbortSignal.timeout(30000) // 30 second timeout
+      })
 
-    if (uploadResponse.ok) {
-      const uploadResult = await uploadResponse.json()
-      if (uploadResult.uploadSpeed && uploadResult.uploadSpeed > 0) {
-        uploadSpeed = uploadResult.uploadSpeed
+      if (uploadResponse.ok) {
+        const uploadDuration = (performance.now() - uploadStart) / 1000 // seconds
+        const uploadSizeMB = testDataSize / (1024 * 1024)
+        const measuredUploadSpeed = (uploadSizeMB * 8) / uploadDuration // Mbps
 
-        const uploadScore = Math.min(100, (uploadSpeed / 50) * 100)
-        measurements.push({
-          timestamp: Date.now(),
-          type: 'speed',
-          value: uploadSpeed,
-          score: uploadScore,
-          phase: 'Upload Test'
-        })
+        // Only accept realistic speeds
+        if (measuredUploadSpeed > 0.1 && measuredUploadSpeed < 10000 && uploadDuration > 0.3) {
+          uploadTests.push(measuredUploadSpeed)
+
+          updateProgress('speed', 60 + (uploadAttempt + 1) * 3,
+            `Upload: ${measuredUploadSpeed.toFixed(2)} Mbps`, currentScore)
+        }
       }
+    } catch (error) {
+      console.warn(`Upload test attempt ${uploadAttempt + 1} failed:`, error)
     }
-  } catch (error) {
-    console.warn('Upload test failed, using estimate:', error)
+  }
+
+  // Calculate average upload speed
+  if (uploadTests.length > 0) {
+    uploadSpeed = uploadTests.reduce((a, b) => a + b, 0) / uploadTests.length
+
+    const uploadScore = Math.min(100, (uploadSpeed / 50) * 100)
+    measurements.push({
+      timestamp: Date.now(),
+      type: 'speed',
+      value: uploadSpeed,
+      score: uploadScore,
+      phase: 'Upload Test'
+    })
   }
   
   updateProgress('dns', 65, 'Measuring connection quality...')

@@ -3,9 +3,7 @@ import { NextResponse } from 'next/server'
 // Real upload speed testing endpoint
 export async function POST(req: Request) {
   try {
-    const startTime = Date.now()
-
-    // Read the uploaded data
+    // Read the uploaded data - the client measures the upload time
     const formData = await req.formData()
     const file = formData.get('data') as Blob
 
@@ -13,20 +11,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'No data provided' }, { status: 400 })
     }
 
-    // Get the size
-    const size = file.size
-    const duration = Date.now() - startTime
-
-    // Calculate upload speed in Mbps
-    const sizeMB = size / (1024 * 1024)
-    const durationSeconds = duration / 1000
-    const uploadSpeedMbps = (sizeMB * 8) / durationSeconds
-
+    // Just acknowledge receipt - client handles timing
     return NextResponse.json({
       success: true,
-      size,
-      duration,
-      uploadSpeed: uploadSpeedMbps,
+      size: file.size,
       timestamp: Date.now()
     })
   } catch (error) {

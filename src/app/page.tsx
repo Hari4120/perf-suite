@@ -88,7 +88,7 @@ export default function Dashboard() {
               Performance Suite
             </h1>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Professional API & Network Testing
+              API & Network Testing
             </p>
           </div>
           <ThemeToggle />
