@@ -68,7 +68,7 @@ export default function LatencyChart({ data, label = "Latency (ms)", color }: La
         borderColor: gridColor,
         borderWidth: 1,
         callbacks: {
-          label: (context) => `${label}: ${context.parsed.y.toFixed(2)}ms`
+          label: (context) => `${label}: ${context.parsed.y?.toFixed(2) || 0}ms`
         }
       },
     },

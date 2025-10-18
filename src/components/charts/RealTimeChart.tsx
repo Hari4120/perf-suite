@@ -98,7 +98,7 @@ export default function RealTimeChart({
         borderColor: gridColor,
         borderWidth: 1,
         callbacks: {
-          label: (context) => `${label}: ${context.parsed.y.toFixed(2)}ms`,
+          label: (context) => `${label}: ${context.parsed.y?.toFixed(2) || 0}ms`,
           afterLabel: () => isActive ? 'Live update' : 'Completed'
         }
       },
