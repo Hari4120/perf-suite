@@ -79,10 +79,10 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       {/* Header */}
-      <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <header className="border-b bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0">
+        <div className="w-full px-6 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               Performance Suite
@@ -95,7 +95,8 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-6 py-8 space-y-8">
+      <main className="flex-1 overflow-y-auto px-6 py-8">
+        <div className="max-w-7xl mx-auto space-y-8">
         {/* Test Configuration */}
         <Card>
           <CardHeader>
@@ -210,11 +211,12 @@ export default function Dashboard() {
 
         {/* Network Tests */}
         <NetworkTests onResult={(result) => setCurrentResult(result)} />
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="border-t bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm mt-16">
-        <div className="max-w-7xl mx-auto px-6 py-8">
+      <footer className="border-t bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm flex-shrink-0">
+        <div className="w-full px-6 py-4">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-sm text-gray-600 dark:text-gray-400">
               Performance Benchmark Suite v2.0
