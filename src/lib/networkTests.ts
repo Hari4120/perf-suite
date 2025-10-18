@@ -231,72 +231,88 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('speed', 60, 'Testing upload speeds...')
 
-  // Real upload speed testing - use multiple smaller uploads for accuracy
-  let uploadSpeed = avgDownloadSpeed * 0.15 // Fallback estimate
+  // Real upload speed testing using streaming approach
+  let uploadSpeed = avgDownloadSpeed * 0.4 // Reasonable fallback estimate
   const uploadTests: number[] = []
 
-  // Use smaller chunks for more accurate measurement (avoid server processing delays)
-  const chunkSizes = [1, 2, 3] // MB - stay well under Vercel's limit
+  // Perform multiple upload tests with increasing sizes for accuracy
+  const uploadSizes = [2, 3, 4] // MB sizes to test
 
-  for (let i = 0; i < chunkSizes.length; i++) {
+  for (let i = 0; i < uploadSizes.length; i++) {
     try {
-      const testDataSize = chunkSizes[i] * 1024 * 1024
+      const sizeInBytes = uploadSizes[i] * 1024 * 1024
 
-      // Create ArrayBuffer and measure only the network upload time
-      const testData = new ArrayBuffer(testDataSize)
-      const blob = new Blob([testData])
+      // Generate random data to prevent compression
+      const randomData = new Uint8Array(sizeInBytes)
+      crypto.getRandomValues(randomData)
+      const blob = new Blob([randomData])
 
-      const formData = new FormData()
-      formData.append('data', blob, 'upload-test.bin')
-
-      // Start timing just before upload
+      // Use XMLHttpRequest for more accurate upload progress tracking
       const uploadStart = performance.now()
 
-      const uploadResponse = await fetch('/api/upload-test', {
-        method: 'POST',
-        body: formData,
-        signal: AbortSignal.timeout(30000)
+      const uploadPromise = new Promise<number>((resolve, reject) => {
+        const xhr = new XMLHttpRequest()
+
+        xhr.upload.addEventListener('loadstart', () => {
+          // Track when actual upload starts
+        })
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            // We could track progress here if needed
+          }
+        })
+
+        xhr.upload.addEventListener('loadend', () => {
+          // Upload complete - this is when data finished sending
+          const uploadEnd = performance.now()
+          const duration = (uploadEnd - uploadStart) / 1000
+          const sizeMB = sizeInBytes / (1024 * 1024)
+          const speedMbps = (sizeMB * 8) / duration
+          resolve(speedMbps)
+        })
+
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')))
+        xhr.addEventListener('abort', () => reject(new Error('Upload aborted')))
+
+        xhr.open('POST', '/api/upload-test')
+
+        const formData = new FormData()
+        formData.append('data', blob, 'test.bin')
+
+        xhr.send(formData)
       })
 
-      // Stop timing when response is received
-      const uploadEnd = performance.now()
+      const measuredSpeed = await uploadPromise
 
-      if (uploadResponse.ok) {
-        const uploadDuration = (uploadEnd - uploadStart) / 1000 // seconds
-        const uploadSizeMB = testDataSize / (1024 * 1024)
+      // Validate the measurement
+      if (measuredSpeed > 0.5 && measuredSpeed < 1000) {
+        uploadTests.push(measuredSpeed)
 
-        // Calculate speed: (size in MB * 8 bits per byte) / duration in seconds = Mbps
-        const measuredUploadSpeed = (uploadSizeMB * 8) / uploadDuration
+        const uploadScore = Math.min(100, (measuredSpeed / 50) * 100)
+        measurements.push({
+          timestamp: Date.now(),
+          type: 'speed',
+          value: measuredSpeed,
+          score: uploadScore,
+          phase: 'Upload Test'
+        })
 
-        // Only accept realistic speeds (> 0.1 Mbps and < 1 Gbps)
-        if (measuredUploadSpeed > 0.1 && measuredUploadSpeed < 1000 && uploadDuration > 0.2) {
-          uploadTests.push(measuredUploadSpeed)
-
-          const uploadScore = Math.min(100, (measuredUploadSpeed / 50) * 100)
-          measurements.push({
-            timestamp: Date.now(),
-            type: 'speed',
-            value: measuredUploadSpeed,
-            score: uploadScore,
-            phase: 'Upload Test'
-          })
-
-          updateProgress('speed', 60 + (i + 1) * 3,
-            `Upload: ${measuredUploadSpeed.toFixed(1)} Mbps`, uploadScore)
-        }
+        updateProgress('speed', 60 + (i + 1) * 3,
+          `Upload: ${measuredSpeed.toFixed(1)} Mbps`, uploadScore)
       }
 
-      // Small delay between tests
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Brief pause between tests
+      await new Promise(resolve => setTimeout(resolve, 300))
     } catch (error) {
       console.warn(`Upload test ${i + 1} failed:`, error)
     }
   }
 
-  // Use median upload speed for better accuracy (removes outliers)
+  // Calculate final upload speed - use median to filter outliers
   if (uploadTests.length > 0) {
-    const sortedSpeeds = [...uploadTests].sort((a, b) => a - b)
-    uploadSpeed = sortedSpeeds[Math.floor(sortedSpeeds.length / 2)]
+    const sorted = [...uploadTests].sort((a, b) => a - b)
+    uploadSpeed = sorted[Math.floor(sorted.length / 2)]
   }
   
   updateProgress('dns', 65, 'Measuring connection quality...')
