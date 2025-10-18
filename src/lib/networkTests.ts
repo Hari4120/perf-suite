@@ -249,7 +249,6 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
     const formData = new FormData()
     formData.append('data', testData)
 
-    const uploadStart = performance.now()
     const uploadResponse = await fetch('/api/upload-test', {
       method: 'POST',
       body: formData,

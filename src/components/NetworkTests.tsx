@@ -78,7 +78,7 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                   <span className="text-sm font-medium">Download</span>
                 </div>
                 <div className="text-2xl font-bold text-blue-600">
-                  {results.networkData.downloadSpeed.toFixed(1)}
+                  {results.networkData.downloadSpeed?.toFixed(1) || '0.0'}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">Mbps</div>
               </div>
@@ -89,7 +89,7 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                   <span className="text-sm font-medium">Upload</span>
                 </div>
                 <div className="text-2xl font-bold text-green-600">
-                  {results.networkData.uploadSpeed.toFixed(1)}
+                  {results.networkData.uploadSpeed?.toFixed(1) || '0.0'}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">Mbps</div>
               </div>
@@ -100,7 +100,7 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                   <span className="text-sm font-medium">Latency</span>
                 </div>
                 <div className="text-2xl font-bold text-yellow-600">
-                  {results.networkData.latency}
+                  {results.networkData.latency || 0}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">ms</div>
               </div>
@@ -111,7 +111,7 @@ export default function NetworkTests({ onResult }: NetworkTestsProps) {
                   <span className="text-sm font-medium">Quality</span>
                 </div>
                 <div className="text-2xl font-bold text-purple-600">
-                  {results.networkData.qualityScore}
+                  {results.networkData.qualityScore || 0}
                 </div>
                 <div className="text-xs text-gray-600 dark:text-gray-400">/ 100</div>
               </div>
