@@ -99,7 +99,7 @@ export default function ComparisonChart({ results, metric = 'avg' }: ComparisonC
         borderColor: gridColor,
         borderWidth: 1,
         callbacks: {
-          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)}ms`,
+          label: (context) => `${context.dataset.label}: ${context.parsed.y?.toFixed(2) || 0}ms`,
           afterLabel: (context) => {
             const result = validResults[context.dataIndex]
             return [
