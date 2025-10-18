@@ -128,7 +128,7 @@ async function runStressBenchmark(url: string, maxConcurrent: number, duration: 
 export async function POST(req: Request) {
   try {
     // Apply rate limiting
-    const rateLimitCheck = rateLimit({ windowMs: 60000, maxRequests: 20 })(req as any)
+    const rateLimitCheck = rateLimit({ windowMs: 60000, maxRequests: 20 })(req as never)
     if (rateLimitCheck) return rateLimitCheck
 
     const body = await req.json()
