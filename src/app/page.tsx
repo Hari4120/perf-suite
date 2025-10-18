@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/Input"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/Card"
 import { ThemeToggle } from "@/components/ThemeToggle"
 import NetworkTests from "@/components/NetworkTests"
-import { LazyLatencyChart, LazyHistogramChart } from "@/components/LazyCharts"
 import { formatDuration } from "@/lib/utils"
 import type { BenchmarkResult, BenchmarkType } from "@/types/benchmark"
 

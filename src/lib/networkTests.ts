@@ -44,6 +44,9 @@ const SPEED_TEST_FILES = [
   { url: 'https://speed.cloudflare.com/__down?bytes=25000000', size: 25000000, name: '25MB' },    // 25MB
   { url: 'https://speed.cloudflare.com/__down?bytes=50000000', size: 50000000, name: '50MB' },    // 50MB
   { url: 'https://speed.cloudflare.com/__down?bytes=100000000', size: 100000000, name: '100MB' }, // 100MB
+  { url: 'https://speed.cloudflare.com/__down?bytes=200000000', size: 200000000, name: '200MB' },  // 200MB
+  { url: 'https://speed.cloudflare.com/__down?bytes=500000000', size: 500000000, name: '500MB' },  // 500MB
+  { url: 'https://speed.cloudflare.com/__down?bytes=1000000000', size: 1000000000, name: '1GB' }   // 1GB
 ]
 
 // Get the best available endpoint based on connectivity

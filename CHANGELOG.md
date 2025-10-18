@@ -2,78 +2,51 @@
 
 All notable changes to the Performance Benchmark Suite will be documented in this file.
 
+## [2.1.0] - 2025-01-18
+
+### Major Cleanup & Optimization
+
+#### Removed Bloat
+- Removed all unused chart components (ComparisonChart, HistogramChart, LazyCharts, RealTimeChart)
+- Removed authentication scaffolding (NextAuth, Prisma, database schemas)
+- Removed testing infrastructure (Jest, Playwright, test files)
+- Removed Docker/CI/CD infrastructure (not needed for Vercel deployment)
+- Removed 15+ unused npm dependencies
+- Removed unnecessary UI components (AnimatedCard, Button, Tooltip, LoadingStates)
+
+#### Network Testing Improvements
+- Fixed upload speed measurement to use client-side timing for accuracy
+- Implemented multiple upload tests (1MB, 2MB, 3MB) with median calculation
+- Fixed CORS issues by using only Cloudflare endpoints
+- Reduced upload size to stay under Vercel's 4.5MB limit
+- Added live progress display with animated icons and real-time speeds
+- Improved latency testing with 15 samples using lightweight endpoints
+
+#### UI Enhancements
+- Removed meaningless stats (median, 95th percentile) for API tests
+- Removed response time and distribution charts
+- Added live test progress with animated progress bar
+- Display real-time download/upload speeds during testing
+- Show live quality score during test
+- Optimized page layout to use full window height with flex layout
+
+#### Code Cleanup
+- Simplified validation schemas to only what's needed
+- Removed authentication-related code
+- Cleaned up package.json scripts to essentials
+- Removed "Professional" branding from all metadata
+
+### Current Features
+- API latency, throughput, load, and stress testing
+- Internet speed test (download, upload, latency, jitter, quality score)
+- Live progress display during testing
+- CSV export for API test results
+- Dark/light theme support
+- Minimal, clean UI focused on functionality
+
 ## [2.0.0] - 2025-01-18
 
-### Added - Major Modernization Update
-
-#### Architecture & Infrastructure
-- **Database Integration**: Added Prisma ORM with PostgreSQL support for persistent data storage
-- **Authentication**: Prepared NextAuth.js v5 integration for multi-user support
-- **Docker Support**: Complete Docker and docker-compose configuration for containerized deployment
-- **CI/CD Pipeline**: GitHub Actions workflow for automated testing, building, and deployment
-
-#### Security Enhancements
-- **API Rate Limiting**: Implemented middleware for rate limiting (20 requests/minute default)
-- **Input Validation**: Added Zod schemas for comprehensive request validation
-- **Security Headers**: Automatic security headers (CSP, X-Frame-Options, etc.)
-- **CORS Configuration**: Configurable CORS with environment-based origin whitelisting
-
-#### Testing & Quality Assurance
-- **Unit Testing**: Jest configuration with React Testing Library
-- **E2E Testing**: Playwright setup for cross-browser testing
-- **Test Coverage**: Coverage reporting configured
-- **Sample Tests**: Example unit and E2E tests for key functionality
-
-#### Developer Experience
-- **Enhanced Scripts**: Added 15+ npm scripts for common development tasks
-- **Environment Templates**: .env.example with all required configuration
-- **TypeScript Strict Mode**: Improved type safety across the codebase
-- **Code Quality**: Automated linting and formatting capabilities
-
-#### Dependencies Updated
-- React 19.1.0 → 19.2.0
-- Next.js 15.5.4 → Latest
-- All dependencies updated to latest compatible versions
-- Added modern packages:
-  - @tanstack/react-query for data fetching
-  - Zustand for state management
-  - Prisma for database ORM
-  - Zod for validation
-  - NextAuth for authentication
-  - Recharts for advanced visualizations
-
-#### Performance & Optimization
-- **Query Caching**: React Query integration ready
-- **State Management**: Zustand for lightweight global state
-- **Image Optimization**: Sharp integration for Next.js image optimization
-- **Build Optimization**: Docker multi-stage builds for smaller images
-
-### Changed
-- API routes now include validation and rate limiting
-- Improved error handling with detailed error responses
-- Enhanced security with middleware layer
-
-### Infrastructure
-- PostgreSQL database schema defined
-- Redis ready for caching layer
-- Multi-stage Docker build for production optimization
-- GitHub Actions CI/CD pipeline
-
-### Documentation
-- Updated README with new features and setup instructions
-- Added CHANGELOG for version tracking
-- Environment variables documented in .env.example
-- Docker deployment guide included
-
-## [1.0.0] - Previous Release
-
-### Features
-- Latency, throughput, load, and stress testing
-- Network quality tests (speed test, buffer bloat, DNS)
-- Real-time performance monitoring
-- AI-powered recommendations
-- Anomaly detection
-- Interactive charts and visualizations
-- Dark/light theme support
-- Export functionality
-- Responsive design
+### Initial modernization with Next.js 15, React 19, and Tailwind CSS v4
+- Complete UI overhaul with modern design
+- Network testing functionality
+- Theme support
