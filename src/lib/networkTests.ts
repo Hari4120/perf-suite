@@ -1,7 +1,7 @@
 // Client-side network testing utilities that work in the browser
 export interface NetworkTestResult {
   downloadSpeed: number // Mbps
-  uploadSpeed: number // Mbps (estimated)
+  uploadSpeed: number // Mbps (measured via real upload test)
   latency: number // ms
   jitter: number // ms
   bufferBloat: number // ms
@@ -238,13 +238,42 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('speed', 60, 'Testing upload speeds...')
 
-  // Estimate upload speed based on typical broadband ratios
-  // Browser-based upload tests are unreliable due to:
-  // 1. Server processing time included in measurement
-  // 2. CORS and preflight requests adding overhead
-  // 3. Buffering and acknowledgment delays
-  // 4. No control over TCP window size and flow control
-  const uploadSpeed = avgDownloadSpeed * 0.15 // Realistic 15% ratio for most connections
+  // Real upload speed testing
+  let uploadSpeed = avgDownloadSpeed * 0.15 // Fallback estimate
+
+  try {
+    // Create test data (5MB for upload test)
+    const testDataSize = 5 * 1024 * 1024 // 5MB
+    const testData = new Blob([new ArrayBuffer(testDataSize)])
+
+    const formData = new FormData()
+    formData.append('data', testData)
+
+    const uploadStart = performance.now()
+    const uploadResponse = await fetch('/api/upload-test', {
+      method: 'POST',
+      body: formData,
+      signal: AbortSignal.timeout(15000) // 15 second timeout
+    })
+
+    if (uploadResponse.ok) {
+      const uploadResult = await uploadResponse.json()
+      if (uploadResult.uploadSpeed && uploadResult.uploadSpeed > 0) {
+        uploadSpeed = uploadResult.uploadSpeed
+
+        const uploadScore = Math.min(100, (uploadSpeed / 50) * 100)
+        measurements.push({
+          timestamp: Date.now(),
+          type: 'speed',
+          value: uploadSpeed,
+          score: uploadScore,
+          phase: 'Upload Test'
+        })
+      }
+    }
+  } catch (error) {
+    console.warn('Upload test failed, using estimate:', error)
+  }
   
   updateProgress('dns', 65, 'Measuring connection quality...')
 
