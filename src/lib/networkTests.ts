@@ -233,43 +233,27 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
   
   updateProgress('speed', 60, 'Testing upload speeds...')
 
-  // Real upload speed testing - download files and upload them back
+  // Real upload speed testing - use multiple uploads with 4MB max (under Vercel limit)
   let uploadSpeed = avgDownloadSpeed * 0.4 // Reasonable fallback estimate
   const uploadTests: number[] = []
 
-  // Use same file sizes as download test for consistency (10MB, 25MB)
-  const uploadTestFiles = [SPEED_TEST_FILES[0], SPEED_TEST_FILES[1]]
+  // Test with 3MB and 4MB sizes (stay under Vercel's 4.5MB limit)
+  const uploadSizes = [3, 4] // MB
 
-  for (let i = 0; i < uploadTestFiles.length; i++) {
+  for (let i = 0; i < uploadSizes.length; i++) {
     try {
-      const testFile = uploadTestFiles[i]
+      const sizeInMB = uploadSizes[i]
+      const sizeInBytes = sizeInMB * 1024 * 1024
 
-      // Download the file first
-      updateProgress('speed', 60 + (i * 5), `Preparing ${testFile.name} upload...`, currentScore)
+      updateProgress('speed', 60 + (i * 5), `Preparing ${sizeInMB}MB upload...`, currentScore)
 
-      const downloadResponse = await fetch(testFile.url, {
-        cache: 'no-cache',
-        signal: AbortSignal.timeout(20000)
-      })
-
-      if (!downloadResponse.ok || !downloadResponse.body) continue
-
-      // Read downloaded data
-      const reader = downloadResponse.body.getReader()
-      const chunks: Uint8Array[] = []
-      let totalSize = 0
-
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-        totalSize += value.length
-      }
-
-      const blob = new Blob(chunks)
+      // Generate random data to prevent compression
+      const randomData = new Uint8Array(sizeInBytes)
+      crypto.getRandomValues(randomData)
+      const blob = new Blob([randomData])
 
       // Upload and measure speed
-      updateProgress('speed', 60 + (i * 5) + 2, `Uploading ${testFile.name}...`, currentScore)
+      updateProgress('speed', 60 + (i * 5) + 2, `Uploading ${sizeInMB}MB...`, currentScore)
 
       const uploadStart = performance.now()
 
@@ -279,7 +263,7 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
         xhr.upload.addEventListener('loadend', () => {
           const uploadEnd = performance.now()
           const duration = (uploadEnd - uploadStart) / 1000
-          const sizeMB = totalSize / (1024 * 1024)
+          const sizeMB = sizeInBytes / (1024 * 1024)
           const speedMbps = (sizeMB * 8) / duration
           resolve(speedMbps)
         })
@@ -292,7 +276,7 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
         xhr.timeout = 30000
 
         const formData = new FormData()
-        formData.append('data', blob, testFile.name)
+        formData.append('data', blob, `upload-${sizeInMB}mb.bin`)
 
         xhr.send(formData)
       })
@@ -312,7 +296,7 @@ export async function runSpeedTest(onProgress?: (progress: TestProgress) => void
         })
 
         updateProgress('speed', 60 + (i * 5) + 4,
-          `Upload: ${measuredSpeed.toFixed(1)} Mbps (${testFile.name})`, uploadScore)
+          `Upload: ${measuredSpeed.toFixed(1)} Mbps (${sizeInMB}MB)`, uploadScore)
       }
 
       await new Promise(resolve => setTimeout(resolve, 500))
